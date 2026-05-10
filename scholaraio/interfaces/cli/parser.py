@@ -884,4 +884,12 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    # --- serve ---
+    from scholaraio.interfaces.cli.serve import cmd_serve
+
+    p_serve = sub.add_parser("serve", help="Start HTTP API server for external UIs (e.g. scholaraio-hub)")
+    p_serve.set_defaults(func=cmd_serve)
+    p_serve.add_argument("--host", default="127.0.0.1", help="Bind address (default: 127.0.0.1)")
+    p_serve.add_argument("--port", type=int, default=8765, help="Port number (default: 8765)")
+
     return parser

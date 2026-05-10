@@ -64,6 +64,10 @@ draw = [
     "cli-anything-inkscape>=1.0.0",
     "mermaid-py>=0.3",
 ]
+serve = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+]
 full = [
     "scholaraio[embed]",
     "scholaraio[topics]",
