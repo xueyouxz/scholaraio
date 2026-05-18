@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import shutil
 import threading
 import webbrowser
 from http import HTTPStatus
@@ -84,12 +85,16 @@ class LibraryViewRequestHandler(BaseHTTPRequestHandler):
 
     def _send_pdf(self, pdf_path: Path) -> None:
         filename = pdf_path.name.replace("\\", "_").replace('"', "_")
-        self._send_bytes(
-            HTTPStatus.OK,
-            pdf_path.read_bytes(),
-            "application/pdf",
-            headers={"Content-Disposition": f'inline; filename="{filename}"'},
-        )
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/pdf")
+        self.send_header("Content-Length", str(pdf_path.stat().st_size))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Disposition", f'inline; filename="{filename}"')
+        self.end_headers()
+        if self.command == "HEAD":
+            return
+        with pdf_path.open("rb") as stream:
+            shutil.copyfileobj(stream, self.wfile, length=1024 * 1024)
 
     def _handle_api(self, path: str) -> None:
         from scholaraio.services.library_view import (

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import threading
+from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -114,6 +116,37 @@ def test_library_view_server_serves_main_pdf_inline(tmp_path):
         assert content_type == "application/pdf"
         assert "inline" in disposition
         assert "Doe-2026-PDF.pdf" in disposition
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_library_view_server_head_pdf_does_not_read_body(tmp_path):
+    from scholaraio.interfaces.cli.gui import create_library_view_server
+
+    cfg = _build_config({}, tmp_path)
+    paper_dir = tmp_path / "data" / "libraries" / "papers" / "Doe-2026-Head-PDF"
+    paper_dir.mkdir(parents=True)
+    (paper_dir / "meta.json").write_text(
+        json.dumps({"id": "head-pdf", "title": "Head PDF", "authors": ["Jane Doe"], "year": 2026}),
+        encoding="utf-8",
+    )
+    (paper_dir / "Doe-2026-Head-PDF.pdf").write_bytes(b"%PDF-head")
+
+    server = create_library_view_server(cfg, host="127.0.0.1", port=0)
+    host, port = server.server_address
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with patch.object(Path, "read_bytes", side_effect=AssertionError("PDF body should not be buffered")):
+            request = Request(f"http://{host}:{port}/api/main/pdf?id=head-pdf", method="HEAD")
+            with urlopen(request, timeout=3) as response:
+                body = response.read()
+                content_type = response.headers["Content-Type"]
+                length = response.headers["Content-Length"]
+        assert body == b""
+        assert content_type == "application/pdf"
+        assert length == str(len(b"%PDF-head"))
     finally:
         server.shutdown()
         server.server_close()

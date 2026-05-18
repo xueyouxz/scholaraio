@@ -160,7 +160,12 @@ def build_main_library_view(cfg: Config) -> dict:
 def _find_main_paper(cfg: Config, paper_id: str) -> tuple[Path, dict, list[dict]]:
     issue_map = _main_issue_map(cfg.papers_dir)
     for paper_dir in iter_paper_dirs(cfg.papers_dir):
-        meta = read_meta(paper_dir)
+        try:
+            meta = read_meta(paper_dir)
+        except (ValueError, FileNotFoundError):
+            if paper_id == paper_dir.name:
+                raise KeyError(paper_id) from None
+            continue
         current_id = meta.get("id") or paper_dir.name
         if paper_id in {current_id, paper_dir.name}:
             return paper_dir, meta, issue_map.get(paper_dir.name, [])

@@ -169,6 +169,28 @@ def test_main_library_detail_returns_abstract_conclusion_toc_and_pdf_without_com
     assert "commands" not in detail
 
 
+def test_main_library_detail_skips_malformed_metadata_before_requested_paper(tmp_path: Path) -> None:
+    from scholaraio.services.library_view import get_main_paper_detail
+
+    papers_root = tmp_path / "data" / "libraries" / "papers"
+    bad_dir = papers_root / "Bad-2026-Broken"
+    bad_dir.mkdir(parents=True)
+    (bad_dir / "meta.json").write_text("{not json", encoding="utf-8")
+    _write_main_paper(
+        papers_root,
+        "Zoo-2026-Valid",
+        paper_id="valid-paper",
+        title="Valid paper",
+        abstract="Valid abstract.",
+    )
+    cfg = _build_config({}, tmp_path)
+
+    detail = get_main_paper_detail(cfg, "valid-paper")
+
+    assert detail["paper_id"] == "valid-paper"
+    assert detail["abstract"] == "Valid abstract."
+
+
 def test_proceedings_view_lists_child_papers_by_volume(tmp_path: Path) -> None:
     from scholaraio.services.library_view import build_proceedings_library_view
 
