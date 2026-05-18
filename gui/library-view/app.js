@@ -8,6 +8,7 @@ const state = {
   selected: { main: "", proceedings: "" },
   sortKey: "year",
   sortDir: "desc",
+  pdf: null,
   filters: {
     search: "",
     type: "",
@@ -28,6 +29,13 @@ const els = {
   metricErrors: document.getElementById("metric-errors"),
   metricWarnings: document.getElementById("metric-warnings"),
   tableCount: document.getElementById("table-count"),
+  recordsToolbarTitle: document.getElementById("records-toolbar-title"),
+  recordsView: document.getElementById("records-view"),
+  pdfToolbarTitle: document.getElementById("pdf-toolbar-title"),
+  pdfBackButton: document.getElementById("pdf-back-button"),
+  pdfTitle: document.getElementById("pdf-title"),
+  pdfViewer: document.getElementById("pdf-viewer"),
+  pdfFrame: document.getElementById("pdf-frame"),
   tableBody: document.getElementById("paper-table-body"),
   emptyState: document.getElementById("empty-state"),
   searchInput: document.getElementById("search-input"),
@@ -44,7 +52,6 @@ const els = {
   detailAbstract: document.getElementById("detail-abstract"),
   detailConclusion: document.getElementById("detail-conclusion"),
   tocList: document.getElementById("toc-list"),
-  commandList: document.getElementById("command-list"),
 };
 
 function text(value, fallback = "--") {
@@ -212,6 +219,17 @@ function renderTable() {
       pill.textContent = label;
       pillRow.appendChild(pill);
     }
+    if (row.has_pdf && row.pdf_url) {
+      const pdfButton = document.createElement("button");
+      pdfButton.className = "pill pdf-pill";
+      pdfButton.type = "button";
+      pdfButton.textContent = "PDF";
+      pdfButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openPdf(row);
+      });
+      pillRow.appendChild(pdfButton);
+    }
     status.appendChild(pillRow);
     tr.appendChild(status);
     els.tableBody.appendChild(tr);
@@ -285,11 +303,6 @@ function renderToc(detail) {
   }
 }
 
-function renderCommands(detail) {
-  const commands = Object.values(detail.commands || {});
-  els.commandList.textContent = commands.length ? commands.join("\n") : "--";
-}
-
 function renderDetail(detail) {
   if (!detail) {
     els.detailTitle.textContent = "Select a record";
@@ -299,7 +312,6 @@ function renderDetail(detail) {
     els.detailAbstract.textContent = "--";
     els.detailConclusion.textContent = "--";
     els.tocList.textContent = "";
-    els.commandList.textContent = "--";
     return;
   }
   els.detailTitle.textContent = text(detail.title);
@@ -309,7 +321,27 @@ function renderDetail(detail) {
   els.detailAbstract.textContent = text(detail.abstract);
   els.detailConclusion.textContent = text(detail.l3_conclusion);
   renderToc(detail);
-  renderCommands(detail);
+}
+
+function showRecords() {
+  state.pdf = null;
+  els.pdfFrame.removeAttribute("src");
+  els.recordsToolbarTitle.hidden = false;
+  els.refreshButton.hidden = false;
+  els.recordsView.hidden = false;
+  els.pdfToolbarTitle.hidden = true;
+  els.pdfViewer.hidden = true;
+}
+
+function openPdf(row) {
+  state.pdf = { url: row.pdf_url, title: row.title || row.dir_name || row.paper_id };
+  els.pdfTitle.textContent = text(state.pdf.title);
+  els.pdfFrame.src = row.pdf_url;
+  els.recordsToolbarTitle.hidden = true;
+  els.refreshButton.hidden = true;
+  els.recordsView.hidden = true;
+  els.pdfToolbarTitle.hidden = false;
+  els.pdfViewer.hidden = false;
 }
 
 async function selectRow(paperId) {
@@ -339,6 +371,9 @@ async function refreshActive({ keepSelection = true } = {}) {
     const payload = await fetchJson(endpoint);
     state.payload[state.tab] = payload;
     state.rows[state.tab] = payload.papers || [];
+    if (state.pdf && !state.rows[state.tab].some((row) => row.pdf_url === state.pdf.url)) {
+      showRecords();
+    }
     renderFilters();
     renderMetrics();
     renderTable();
@@ -365,6 +400,7 @@ function switchTab(tab) {
   });
   state.filters.volume = "";
   els.volumeFilter.value = "";
+  showRecords();
   renderDetail(null);
   refreshActive({ keepSelection: true });
 }
@@ -394,6 +430,7 @@ function bindEvents() {
     renderTable();
   });
   els.refreshButton.addEventListener("click", () => refreshActive({ keepSelection: true }));
+  els.pdfBackButton.addEventListener("click", showRecords);
   document.querySelectorAll("th[data-sort]").forEach((th) => {
     th.addEventListener("click", () => {
       const key = th.dataset.sort;

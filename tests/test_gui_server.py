@@ -80,7 +80,40 @@ def test_library_view_server_serves_static_console_shell(tmp_path):
         assert "ScholarAIO Library" in html
         assert "Main Papers" in html
         assert "Proceedings" in html
+        assert "pdf-frame" in html
+        assert "Back to records" in html
+        assert ">CLI<" not in html
         assert "app.js" in html
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_library_view_server_serves_main_pdf_inline(tmp_path):
+    from scholaraio.interfaces.cli.gui import create_library_view_server
+
+    cfg = _build_config({}, tmp_path)
+    paper_dir = tmp_path / "data" / "libraries" / "papers" / "Doe-2026-PDF"
+    paper_dir.mkdir(parents=True)
+    (paper_dir / "meta.json").write_text(
+        json.dumps({"id": "pdf-paper", "title": "PDF paper", "authors": ["Jane Doe"], "year": 2026}),
+        encoding="utf-8",
+    )
+    (paper_dir / "Doe-2026-PDF.pdf").write_bytes(b"%PDF-inline")
+
+    server = create_library_view_server(cfg, host="127.0.0.1", port=0)
+    host, port = server.server_address
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with urlopen(f"http://{host}:{port}/api/main/pdf?id=pdf-paper", timeout=3) as response:
+            body = response.read()
+            content_type = response.headers["Content-Type"]
+            disposition = response.headers["Content-Disposition"]
+        assert body == b"%PDF-inline"
+        assert content_type == "application/pdf"
+        assert "inline" in disposition
+        assert "Doe-2026-PDF.pdf" in disposition
     finally:
         server.shutdown()
         server.server_close()

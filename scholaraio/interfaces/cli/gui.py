@@ -82,12 +82,23 @@ class LibraryViewRequestHandler(BaseHTTPRequestHandler):
         values = parse_qs(parsed.query).get("id") or [""]
         return values[0]
 
+    def _send_pdf(self, pdf_path: Path) -> None:
+        filename = pdf_path.name.replace("\\", "_").replace('"', "_")
+        self._send_bytes(
+            HTTPStatus.OK,
+            pdf_path.read_bytes(),
+            "application/pdf",
+            headers={"Content-Disposition": f'inline; filename="{filename}"'},
+        )
+
     def _handle_api(self, path: str) -> None:
         from scholaraio.services.library_view import (
             build_main_library_view,
             build_proceedings_library_view,
             get_main_paper_detail,
+            get_main_paper_pdf,
             get_proceedings_paper_detail,
+            get_proceedings_paper_pdf,
         )
 
         try:
@@ -104,6 +115,13 @@ class LibraryViewRequestHandler(BaseHTTPRequestHandler):
                     return
                 self._send_json(HTTPStatus.OK, get_main_paper_detail(self.cfg, paper_id))
                 return
+            if path == "/api/main/pdf":
+                paper_id = self._query_id()
+                if not paper_id:
+                    self._send_error_json(HTTPStatus.BAD_REQUEST, "missing id query parameter")
+                    return
+                self._send_pdf(get_main_paper_pdf(self.cfg, paper_id))
+                return
             if path == "/api/proceedings/papers":
                 self._send_json(HTTPStatus.OK, build_proceedings_library_view(self.cfg))
                 return
@@ -113,6 +131,13 @@ class LibraryViewRequestHandler(BaseHTTPRequestHandler):
                     self._send_error_json(HTTPStatus.BAD_REQUEST, "missing id query parameter")
                     return
                 self._send_json(HTTPStatus.OK, get_proceedings_paper_detail(self.cfg, paper_id))
+                return
+            if path == "/api/proceedings/pdf":
+                paper_id = self._query_id()
+                if not paper_id:
+                    self._send_error_json(HTTPStatus.BAD_REQUEST, "missing id query parameter")
+                    return
+                self._send_pdf(get_proceedings_paper_pdf(self.cfg, paper_id))
                 return
         except KeyError as exc:
             self._send_error_json(HTTPStatus.NOT_FOUND, f"paper not found: {exc.args[0]}")

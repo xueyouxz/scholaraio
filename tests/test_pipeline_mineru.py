@@ -300,7 +300,7 @@ def test_batch_convert_pdfs_falls_back_without_cloud_key(tmp_path, monkeypatch):
     assert (paper_dir / "paper.md").read_text(encoding="utf-8") == "fallback batch ok\n"
 
 
-def test_batch_convert_pdfs_fallback_cleans_noncanonical_source_pdf(tmp_path, monkeypatch):
+def test_batch_convert_pdfs_fallback_renames_noncanonical_source_pdf(tmp_path, monkeypatch):
     paper_dir = tmp_path / "papers" / "Smith-2023-Test"
     paper_dir.mkdir(parents=True)
     (paper_dir / "meta.json").write_text("{}", encoding="utf-8")
@@ -334,6 +334,7 @@ def test_batch_convert_pdfs_fallback_cleans_noncanonical_source_pdf(tmp_path, mo
     assert stats == {"converted": 1, "failed": 0, "skipped": 0}
     assert (paper_dir / "paper.md").read_text(encoding="utf-8") == "fallback batch ok\n"
     assert not pdf.exists()
+    assert (paper_dir / "Smith-2023-Test.pdf").read_bytes() == b"%PDF-1.4\n"
 
 
 def test_batch_convert_pdfs_cloud_splits_items_that_exceed_new_limits(tmp_path, monkeypatch):
@@ -448,6 +449,7 @@ def test_batch_convert_pdfs_cloud_batch_success_counts_each_result(tmp_path, mon
     assert stats == {"converted": 1, "failed": 0, "skipped": 0}
     assert (paper_dir / "paper.md").read_text(encoding="utf-8") == "batch ok\n"
     assert not pdf.exists()
+    assert (paper_dir / "Smith-2023-Test.pdf").read_bytes() == b"%PDF-1.4\n"
 
 
 def test_batch_convert_pdfs_cloud_batch_missing_md_falls_back(tmp_path, monkeypatch):

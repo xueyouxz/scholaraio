@@ -183,6 +183,10 @@ h1 {
   overflow: auto;
 }
 
+.detail-panel {
+  overflow: hidden;
+}
+
 .monitor-card,
 .table-panel {
   border: 1px solid var(--line);
@@ -332,6 +336,13 @@ h1 {
   border-bottom: 1px solid var(--line);
 }
 
+.pdf-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
 .table-count {
   color: var(--text);
   font-size: 15px;
@@ -453,6 +464,21 @@ tbody tr.is-selected {
   white-space: nowrap;
 }
 
+button.pill {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.pdf-pill {
+  background: rgba(93, 143, 223, 0.13);
+  color: #3f669f;
+}
+
+.pdf-pill:hover {
+  background: rgba(93, 143, 223, 0.22);
+}
+
 .pill.ok {
   background: rgba(105, 180, 114, 0.12);
   color: #477c50;
@@ -476,9 +502,12 @@ tbody tr.is-selected {
 }
 
 .detail-card {
+  height: 100%;
   min-height: 100%;
   display: grid;
+  align-content: start;
   gap: 14px;
+  overflow: auto;
 }
 
 .detail-section {
@@ -546,9 +575,7 @@ summary.section-title {
 }
 
 .detail-text {
-  max-height: 180px;
   margin: 0;
-  overflow: auto;
   color: var(--text);
   font-size: 13px;
   line-height: 1.6;
@@ -558,8 +585,6 @@ summary.section-title {
 .toc-list {
   display: grid;
   gap: 5px;
-  max-height: 160px;
-  overflow: auto;
 }
 
 .toc-item {
@@ -577,18 +602,19 @@ summary.section-title {
   white-space: nowrap;
 }
 
-.command-list {
-  max-height: 140px;
-  margin: 0;
-  overflow: auto;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: rgba(15, 23, 42, 0.045);
-  color: var(--text);
-  font-size: 12px;
-  line-height: 1.55;
-  white-space: pre-wrap;
+.pdf-viewer {
+  min-height: 0;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.pdf-viewer iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background: #fff;
 }
 
 @media (max-width: 1180px) {
@@ -622,7 +648,16 @@ summary.section-title {
     overflow: visible;
   }
 
+  .detail-card {
+    height: auto;
+    min-height: 0;
+  }
+
   .table-wrap {
     max-height: 58dvh;
+  }
+
+  .pdf-viewer iframe {
+    min-height: 70dvh;
   }
 }

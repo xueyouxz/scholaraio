@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import quote
 
 from scholaraio.services.audit import Issue, audit_papers
-from scholaraio.stores.papers import best_citation, iter_paper_dirs, read_meta
+from scholaraio.stores.papers import best_citation, find_pdf, iter_paper_dirs, read_meta
 from scholaraio.stores.proceedings import iter_proceedings_papers, read_json
 
 if TYPE_CHECKING:
@@ -29,6 +31,39 @@ def _authors_text(authors: object) -> str:
 
 def _bool_has_text(value: object) -> bool:
     return bool(str(value or "").strip())
+
+
+def _normalize_paper_type(value: object) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", raw)
+    text = re.sub(r"[\s_]+", "-", text).lower().strip("-")
+    text = re.sub(r"-+", "-", text)
+    compact = re.sub(r"[^a-z0-9]", "", text)
+    aliases = {
+        "article": "journal-article",
+        "journalarticle": "journal-article",
+        "researcharticle": "journal-article",
+        "proceedingsarticle": "conference-paper",
+        "conferencearticle": "conference-paper",
+        "conferencepaper": "conference-paper",
+        "bookchapter": "book-chapter",
+    }
+    return aliases.get(compact, text)
+
+
+def _pdf_url(source: str, paper_id: str) -> str:
+    return f"/api/{source}/pdf?id={quote(paper_id)}"
+
+
+def _pdf_fields(source: str, paper_dir: Path, paper_id: str) -> dict:
+    pdf = find_pdf(paper_dir)
+    return {
+        "has_pdf": pdf is not None,
+        "pdf_filename": pdf.name if pdf else "",
+        "pdf_url": _pdf_url(source, paper_id) if pdf else "",
+    }
 
 
 def _issue_dict(issue: Issue) -> dict:
@@ -62,6 +97,7 @@ def _main_row(paper_dir: Path, meta: dict, issues: list[dict]) -> dict:
     paper_id = meta.get("id") or paper_dir.name
     toc = meta.get("toc") or []
     md_file = paper_dir / "paper.md"
+    raw_type = meta.get("paper_type") or ""
     return {
         "paper_id": paper_id,
         "dir_name": paper_dir.name,
@@ -71,7 +107,8 @@ def _main_row(paper_dir: Path, meta: dict, issues: list[dict]) -> dict:
         "year": meta.get("year") or "",
         "journal": meta.get("journal") or "",
         "doi": meta.get("doi") or "",
-        "paper_type": meta.get("paper_type") or "",
+        "paper_type": _normalize_paper_type(raw_type),
+        "paper_type_raw": raw_type,
         "citation_count": best_citation(meta),
         "has_md": md_file.exists(),
         "has_abstract": _bool_has_text(meta.get("abstract")),
@@ -79,6 +116,7 @@ def _main_row(paper_dir: Path, meta: dict, issues: list[dict]) -> dict:
         "toc_count": len(toc) if isinstance(toc, list) else 0,
         "issue_counts": _issue_counts(issues),
         "issues": issues,
+        **_pdf_fields("main", paper_dir, paper_id),
     }
 
 
@@ -133,7 +171,6 @@ def get_main_paper_detail(cfg: Config, paper_id: str) -> dict:
     """Return detailed read-only metadata for one main-library paper."""
     paper_dir, meta, issues = _find_main_paper(cfg, paper_id)
     row = _main_row(paper_dir, meta, issues)
-    resolved_id = row["paper_id"]
     return {
         **row,
         "abstract": meta.get("abstract") or "",
@@ -141,12 +178,6 @@ def get_main_paper_detail(cfg: Config, paper_id: str) -> dict:
         "toc": meta.get("toc") or [],
         "ids": meta.get("ids") or {},
         "source_path": str(paper_dir),
-        "commands": {
-            "show_l2": f'scholaraio show "{resolved_id}" --layer 2',
-            "show_l3": f'scholaraio show "{resolved_id}" --layer 3',
-            "show_l4": f'scholaraio show "{resolved_id}" --layer 4',
-            "repair": f'scholaraio repair "{resolved_id}" --title "<correct title>" --dry-run',
-        },
     }
 
 
@@ -155,8 +186,10 @@ def _proceedings_row(cfg: Config, row: dict) -> dict:
     meta_path = paper_dir / "meta.json"
     meta = read_json(meta_path) if meta_path.exists() else {}
     toc = meta.get("toc") or []
+    paper_id = row.get("paper_id") or row.get("dir_name") or ""
+    raw_type = row.get("paper_type") or meta.get("paper_type") or ""
     return {
-        "paper_id": row.get("paper_id") or row.get("dir_name") or "",
+        "paper_id": paper_id,
         "dir_name": row.get("dir_name") or "",
         "title": row.get("title") or "",
         "authors": meta.get("authors") or [],
@@ -164,7 +197,8 @@ def _proceedings_row(cfg: Config, row: dict) -> dict:
         "year": row.get("year") or "",
         "journal": row.get("journal") or "",
         "doi": row.get("doi") or "",
-        "paper_type": row.get("paper_type") or "",
+        "paper_type": _normalize_paper_type(raw_type),
+        "paper_type_raw": raw_type,
         "proceeding_id": row.get("proceeding_id") or "",
         "proceeding_dir": row.get("proceeding_dir") or "",
         "proceeding_title": row.get("proceeding_title") or "",
@@ -174,6 +208,7 @@ def _proceedings_row(cfg: Config, row: dict) -> dict:
         "toc_count": len(toc) if isinstance(toc, list) else 0,
         "issue_counts": _empty_issue_counts(),
         "issues": [],
+        **_pdf_fields("proceedings", paper_dir, paper_id),
     }
 
 
@@ -206,7 +241,6 @@ def _find_proceedings_row(cfg: Config, paper_id: str) -> tuple[dict, Path, dict]
 def get_proceedings_paper_detail(cfg: Config, paper_id: str) -> dict:
     """Return detailed read-only metadata for one proceedings child paper."""
     row, paper_dir, meta = _find_proceedings_row(cfg, paper_id)
-    title = row["title"] or row["paper_id"]
     return {
         **row,
         "abstract": meta.get("abstract") or "",
@@ -214,7 +248,22 @@ def get_proceedings_paper_detail(cfg: Config, paper_id: str) -> dict:
         "toc": meta.get("toc") or [],
         "ids": meta.get("ids") or {},
         "source_path": str(paper_dir),
-        "commands": {
-            "search": f'scholaraio fsearch "{title}" --scope proceedings',
-        },
     }
+
+
+def get_main_paper_pdf(cfg: Config, paper_id: str) -> Path:
+    """Return the local PDF path for one main-library paper."""
+    paper_dir, _meta, _issues = _find_main_paper(cfg, paper_id)
+    pdf = find_pdf(paper_dir)
+    if pdf is None:
+        raise KeyError(paper_id)
+    return pdf
+
+
+def get_proceedings_paper_pdf(cfg: Config, paper_id: str) -> Path:
+    """Return the local PDF path for one proceedings child paper."""
+    _row, paper_dir, _meta = _find_proceedings_row(cfg, paper_id)
+    pdf = find_pdf(paper_dir)
+    if pdf is None:
+        raise KeyError(paper_id)
+    return pdf

@@ -78,13 +78,20 @@
 
       <section class="table-panel">
         <div class="table-toolbar">
-          <div>
+          <div id="records-toolbar-title">
             <div class="monitor-kicker">Records</div>
             <div class="table-count" id="table-count">--</div>
           </div>
+          <div class="pdf-toolbar-title" id="pdf-toolbar-title" hidden>
+            <button class="soft-button" id="pdf-back-button" type="button">Back to records</button>
+            <div>
+              <div class="monitor-kicker">PDF</div>
+              <div class="table-count" id="pdf-title">--</div>
+            </div>
+          </div>
           <button class="soft-button" id="refresh-button" type="button">Refresh</button>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" id="records-view">
           <table>
             <thead>
               <tr>
@@ -98,6 +105,9 @@
             <tbody id="paper-table-body"></tbody>
           </table>
           <div class="empty-state" id="empty-state" hidden>No records.</div>
+        </div>
+        <div class="pdf-viewer" id="pdf-viewer" hidden>
+          <iframe id="pdf-frame" title="PDF preview"></iframe>
         </div>
       </section>
 
@@ -134,10 +144,6 @@
             <div class="toc-list" id="toc-list"></div>
           </details>
 
-          <div class="detail-section">
-            <div class="section-title">CLI</div>
-            <pre class="command-list" id="command-list">--</pre>
-          </div>
         </section>
       </aside>
     </section>

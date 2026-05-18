@@ -106,8 +106,10 @@ def batch_convert_pdfs(
             _ui(f"  {pdir.name}: fallback failed: {err}")
             stats["failed"] += 1
             return False
-        if pdf_path.exists() and pdf_path.name != "paper.pdf":
-            pdf_path.unlink()
+        if pdf_path.exists():
+            from scholaraio.stores.papers import normalize_pdf_name
+
+            normalize_pdf_name(pdir, pdf_path)
         _ui(f"  {pdir.name}: fell back to {parser_name}")
         converted_dirs.append(pdir)
         stats["converted"] += 1
@@ -229,10 +231,12 @@ def batch_convert_pdfs(
                     move_batch_images = _pipeline_attr("_move_batch_images", batch_assets.move_batch_images)
                     move_batch_images(paper_md, pdir, br.pdf_path.stem, md_src, tmp_dir)
 
-                    # Clean up source PDF (keep only markdown)
+                    # Preserve source PDF under the paper-directory basename.
                     pdf_path = br.pdf_path
-                    if pdf_path.exists() and pdf_path.parent == pdir and pdf_path.name != "paper.pdf":
-                        pdf_path.unlink()
+                    if pdf_path.exists() and pdf_path.parent == pdir:
+                        from scholaraio.stores.papers import normalize_pdf_name
+
+                        normalize_pdf_name(pdir, pdf_path)
 
                     _ui(f"  {pdir.name}: OK")
                     converted_dirs.append(pdir)

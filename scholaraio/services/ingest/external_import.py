@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import shutil
 import time
 from pathlib import Path
 from typing import Any
@@ -114,9 +113,11 @@ def import_external(
             # Copy PDF to paper directory if available
             pdf_src = pdf_paths[idx] if pdf_paths and idx < len(pdf_paths) else None
             if pdf_src and not dry_run:
+                from scholaraio.stores.papers import copy_pdf_to_paper_dir
+
                 paper_d = ctx.ingested_json.parent
-                shutil.copy2(str(pdf_src), str(paper_d / pdf_src.name))
-                _ui(f"  PDF: {pdf_src.name}")
+                dest_pdf = copy_pdf_to_paper_dir(pdf_src, paper_d)
+                _ui(f"  PDF: {dest_pdf.name}")
 
         if has_api and idx < len(records) - 1:
             time.sleep(1.0)

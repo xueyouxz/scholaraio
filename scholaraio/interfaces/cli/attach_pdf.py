@@ -56,9 +56,10 @@ def cmd_attach_pdf(args: argparse.Namespace, cfg) -> None:
     if existing_md.exists():
         _ui(f"Warning: {paper_d.name} already has paper.md and it will be overwritten")
 
-    # Copy PDF to paper directory.
-    dest_pdf = paper_d / pdf_path.name
-    shutil.copy2(str(pdf_path), str(dest_pdf))
+    # Copy PDF to paper directory using the same basename as the paper directory.
+    from scholaraio.stores.papers import copy_pdf_to_paper_dir
+
+    dest_pdf = copy_pdf_to_paper_dir(pdf_path, paper_d)
     _ui(f"Copied PDF: {dest_pdf.name}")
 
     # Convert PDF -> markdown via MinerU.
@@ -215,10 +216,6 @@ def cmd_attach_pdf(args: argparse.Namespace, cfg) -> None:
             if target.exists():
                 shutil.rmtree(target)
             img_dir.rename(target)
-
-    # Clean up the copied PDF (we only need the markdown).
-    if dest_pdf.exists() and dest_pdf.name != "paper.pdf":
-        dest_pdf.unlink()
 
     _ui(f"Generated paper.md: {paper_d.name}/")
 

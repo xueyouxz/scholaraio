@@ -1942,9 +1942,10 @@ class TestAttachPdfFallback:
         args = Namespace(paper_id="paper-1", pdf_path=str(src_pdf), dry_run=False)
         cli.cmd_attach_pdf(args, cfg)
 
-        assert calls == [(paper_dir / "input.pdf", paper_dir / "paper.md")]
+        expected_pdf = paper_dir / "Smith-2023-Test.pdf"
+        assert calls == [(expected_pdf, paper_dir / "paper.md")]
         assert (paper_dir / "paper.md").read_text(encoding="utf-8") == "fallback attach ok\n"
-        assert not (paper_dir / "input.pdf").exists()
+        assert expected_pdf.read_bytes() == b"%PDF-1.4\n"
 
     def test_attach_pdf_prefers_configured_fallback_without_result_object(self, tmp_path, monkeypatch):
         paper_dir = tmp_path / "papers" / "Smith-2023-Test"
@@ -2006,7 +2007,9 @@ class TestAttachPdfFallback:
         args = Namespace(paper_id="paper-1", pdf_path=str(src_pdf), dry_run=False)
         cli.cmd_attach_pdf(args, cfg)
 
-        assert calls == [(paper_dir / "input.pdf", paper_dir / "paper.md")]
+        expected_pdf = paper_dir / "Smith-2023-Test.pdf"
+        assert calls == [(expected_pdf, paper_dir / "paper.md")]
+        assert expected_pdf.read_bytes() == b"%PDF-1.4\n"
         assert (paper_dir / "paper.md").read_text(encoding="utf-8") == "preferred attach ok\n"
 
     def test_attach_pdf_cloud_does_not_split_when_under_new_limits(self, tmp_path, monkeypatch):
