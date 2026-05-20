@@ -46,6 +46,7 @@ def test_workspace_routes_use_current_refs_papers_layout(tmp_path: Path, tmp_pap
     empty_res = client.get("/api/v1/workspaces/demo")
     assert empty_res.status_code == 200
     assert empty_res.json()["workspace"]["paperCount"] == 0
+    assert empty_res.json()["workspace"]["path"] == str(tmp_path / "workspace" / "demo")
 
     add_res = client.post("/api/v1/workspaces/demo/papers", json={"paperId": "aaaa-1111"})
     assert add_res.status_code == 200
@@ -56,10 +57,18 @@ def test_workspace_routes_use_current_refs_papers_layout(tmp_path: Path, tmp_pap
     )
     assert current_entries[0]["id"] == "aaaa-1111"
 
+    list_res = client.get("/api/v1/workspaces")
+    assert list_res.status_code == 200
+    workspaces = list_res.json()["workspaces"]
+    assert len(workspaces) == 1
+    assert workspaces[0]["name"] == "demo"
+    assert workspaces[0]["path"] == str(tmp_path / "workspace" / "demo")
+
     show_res = client.get("/api/workspaces/demo")
     assert show_res.status_code == 200
     workspace = show_res.json()["workspace"]
     assert workspace["paperCount"] == 1
+    assert workspace["path"] == str(tmp_path / "workspace" / "demo")
     assert workspace["papers"][0]["title"] == "Turbulence modeling in boundary layers"
 
 

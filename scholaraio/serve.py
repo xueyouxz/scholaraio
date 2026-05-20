@@ -389,6 +389,7 @@ def create_app(cfg: Config | None = None) -> Any:
             result.append({
                 "id": name,
                 "name": name,
+                "path": str(ws_dir),
                 "paperCount": ws_mod.paper_count(ws_dir),
                 "createdAt": _dir_ctime(ws_dir),
             })
@@ -443,6 +444,7 @@ def create_app(cfg: Config | None = None) -> Any:
             "workspace": {
                 "id": name,
                 "name": name,
+                "path": str(ws_dir),
                 "paperCount": len(papers),
                 "createdAt": _dir_ctime(ws_dir),
                 "papers": papers,
@@ -467,6 +469,7 @@ def create_app(cfg: Config | None = None) -> Any:
             "workspace": {
                 "id": req.name,
                 "name": req.name,
+                "path": str(ws_dir),
                 "paperCount": 0,
                 "createdAt": _dir_ctime(ws_dir),
                 "papers": [],
