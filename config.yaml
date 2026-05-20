@@ -1,11 +1,11 @@
 # ScholarAIO configuration 配置文件
 
 paths:
-  # papers_dir: data/libraries/papers # Optional override; when omitted/legacy-default, ScholarAIO uses data/libraries/papers and auto-falls back to existing data/papers
+  papers_dir: data/papers
+  index_db: data/index.db
   state_root: data/state # Durable internal state root 持久内部状态根目录
   cache_root: data/cache # Rebuildable cache root 可重建缓存根目录
   runtime_root: data/runtime # Ephemeral runtime root 临时运行产物根目录
-  # index_db: data/state/search/index.db # Optional override; when omitted ScholarAIO uses state_root/search/index.db and auto-falls back to existing data/index.db
 
 # LLM backend LLM 后端配置
 # Put api_key in config.local.yaml (gitignored) or use env vars:

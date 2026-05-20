@@ -1155,25 +1155,36 @@ def vsearch(
     fetch_k = min(fetch_k, index.ntotal)
     scores, indices = index.search(q_vec, fetch_k)
 
-    # Load metadata from FTS5 table
+    # Collect candidate IDs from FAISS results before any DB queries
+    candidate_ids = [faiss_ids[idx] for _, idx in zip(scores[0], indices[0]) if idx >= 0]
+
+    # Load metadata only for candidate papers (not the full table)
     conn = sqlite3.connect(db_path)
     try:
-        has_fts = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='papers'").fetchone()
+        conn.row_factory = sqlite3.Row
         meta_map: dict[str, dict] = {}
-        if has_fts:
-            conn.row_factory = sqlite3.Row
-            for row in conn.execute(
-                "SELECT paper_id, title, authors, year, journal, citation_count, paper_type FROM papers"
-            ).fetchall():
-                meta_map[row["paper_id"]] = dict(row)
-        # Load dir_name mapping
         dir_map: dict[str, str] = {}
-        has_reg = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='papers_registry'"
-        ).fetchone()
-        if has_reg:
-            for row in conn.execute("SELECT id, dir_name FROM papers_registry").fetchall():
-                dir_map[row[0]] = row[1]
+        if candidate_ids:
+            placeholders = ",".join("?" * len(candidate_ids))
+            has_fts = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='papers'"
+            ).fetchone()
+            if has_fts:
+                for row in conn.execute(
+                    f"SELECT paper_id, title, authors, year, journal, citation_count, paper_type, abstract, md_path"
+                    f" FROM papers WHERE paper_id IN ({placeholders})",
+                    candidate_ids,
+                ).fetchall():
+                    meta_map[row["paper_id"]] = dict(row)
+            has_reg = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='papers_registry'"
+            ).fetchone()
+            if has_reg:
+                for row in conn.execute(
+                    f"SELECT id, dir_name FROM papers_registry WHERE id IN ({placeholders})",
+                    candidate_ids,
+                ).fetchall():
+                    dir_map[row[0]] = row[1]
     finally:
         conn.close()
 
@@ -1193,6 +1204,8 @@ def vsearch(
                 "journal": meta.get("journal") or "",
                 "citation_count": meta.get("citation_count") or "",
                 "paper_type": meta.get("paper_type") or "",
+                "abstract": meta.get("abstract") or "",
+                "md_path": meta.get("md_path") or "",
                 "score": float(score),
             }
         )

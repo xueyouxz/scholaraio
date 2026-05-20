@@ -353,7 +353,7 @@ def build_index(papers_dir: Path, db_path: Path, rebuild: bool = False) -> int:
     return count
 
 
-_SEARCH_COLS = "paper_id, title, authors, year, journal, doi, paper_type, citation_count"
+_SEARCH_COLS = "paper_id, title, authors, year, journal, doi, paper_type, citation_count, abstract, md_path"
 _PROCEEDINGS_SEARCH_COLS = (
     "paper_id, title, authors, year, journal, doi, paper_type, citation_count, "
     "dir_name, proceeding_id, proceeding_dir, proceeding_title"
@@ -762,8 +762,14 @@ def _enrich_dir_names(results: list[dict], conn: sqlite3.Connection) -> list[dic
     has_reg = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='papers_registry'").fetchone()
     if not has_reg:
         return results
+    ids = [r["paper_id"] for r in results if r.get("paper_id")]
+    if not ids:
+        return results
+    placeholders = ",".join("?" * len(ids))
     id_to_dir: dict[str, str] = {}
-    for row in conn.execute("SELECT id, dir_name FROM papers_registry").fetchall():
+    for row in conn.execute(
+        f"SELECT id, dir_name FROM papers_registry WHERE id IN ({placeholders})", ids
+    ).fetchall():
         id_to_dir[row[0]] = row[1]
     for r in results:
         r["dir_name"] = id_to_dir.get(r["paper_id"], "")
