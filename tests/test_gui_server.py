@@ -89,7 +89,10 @@ def test_library_view_server_serves_static_console_shell(tmp_path):
         assert "pdf-frame" in html
         assert "Back to records" in html
         assert ">CLI<" not in html
-        assert "tex-chtml.js" in html
+        assert "https://" not in html
+        assert "http://" not in html
+        assert "tex-chtml.js" not in html
+        assert "MathJax" not in html
         assert "app.js" in html
     finally:
         server.shutdown()
@@ -494,7 +497,6 @@ const document = {{
 }};
 const context = {{
   document,
-  MathJax: {{ typesetPromise: async (nodes) => {{ context.__mathNodes = nodes.map((node) => node.id); }} }},
   __abstract: {abstract},
   __conclusion: {conclusion},
   navigator: {{ clipboard: {{ writeText: async () => {{}} }} }},
@@ -513,7 +515,6 @@ renderDetail({{
 globalThis.__result = {{
   abstractHtml: els.detailAbstract.innerHTML,
   conclusionHtml: els.detailConclusion.innerHTML,
-  mathNodes: globalThis.__mathNodes || [],
 }};
 `, context);
 setImmediate(() => console.log(JSON.stringify(context.__result)));
@@ -523,10 +524,11 @@ setImmediate(() => console.log(JSON.stringify(context.__result)));
 
     payload = json.loads(result.stdout)
     assert "<strong>energy</strong>" in payload["abstractHtml"]
-    assert "$E_i = mc^2$" in payload["abstractHtml"]
+    assert '<span class="math math-inline"' in payload["abstractHtml"]
+    assert "E<sub>i</sub> = mc<sup>2</sup>" in payload["abstractHtml"]
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in payload["abstractHtml"]
-    assert "$$\\alpha + \\beta$$" in payload["conclusionHtml"]
-    assert payload["mathNodes"] == ["detail-abstract", "detail-conclusion"]
+    assert '<span class="math math-display"' in payload["conclusionHtml"]
+    assert "α + β" in payload["conclusionHtml"]
 
 
 def test_library_view_app_treats_single_newlines_as_soft_breaks_in_detail_text() -> None:
@@ -598,7 +600,10 @@ console.log(JSON.stringify(context.__result));
 
     html = json.loads(result.stdout)
     assert "<br>" not in html
-    assert "We estimate $E_i = mc^2$ from extracted features." in html
+    assert "We estimate " in html
+    assert '<span class="math math-inline"' in html
+    assert "E<sub>i</sub> = mc<sup>2</sup>" in html
+    assert " from extracted features." in html
 
 
 def test_library_view_css_only_scrolls_display_math() -> None:
@@ -606,8 +611,10 @@ def test_library_view_css_only_scrolls_display_math() -> None:
 
     css = (_static_dir() / "styles.css").read_text(encoding="utf-8")
 
-    assert '.markdown-body mjx-container[display="true"]' in css
-    assert ".markdown-body mjx-container {\n  max-width: 100%;" not in css
+    assert ".math-display" in css
+    assert "overflow-x: auto" in css
+    assert ".math-inline {\n  display: inline;" in css
+    assert "mjx-container" not in css
 
 
 def test_library_view_tab_switch_resets_stale_type_filter() -> None:

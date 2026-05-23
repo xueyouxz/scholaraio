@@ -151,26 +151,6 @@
       </aside>
     </section>
   </main>
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [["$", "$"], ["\\(", "\\)"]],
-        displayMath: [["$$", "$$"], ["\\[", "\\]"]],
-        processEscapes: true
-      },
-      options: {
-        skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
-      },
-      startup: {
-        typeset: false,
-        ready: () => {
-          MathJax.startup.defaultReady();
-          window.dispatchEvent(new Event("scholaraio-mathjax-ready"));
-        }
-      }
-    };
-  </script>
   <script type="module" src="/app.js"></script>
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </body>
 </html>

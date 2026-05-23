@@ -653,14 +653,59 @@ summary.section-title {
   text-decoration: underline;
 }
 
-.markdown-body mjx-container[display="true"] {
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+.math {
+  font-family:
+    "STIX Two Math",
+    "Cambria Math",
+    "Times New Roman",
+    serif;
+  font-size: 1.03em;
 }
 
-.markdown-body mjx-container[display="true"] {
-  padding-bottom: 2px;
+.math-inline {
+  display: inline;
+  white-space: nowrap;
+}
+
+.math-display {
+  display: block;
+  max-width: 100%;
+  margin: 8px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.math-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2px;
+  vertical-align: middle;
+  font-size: 0.94em;
+}
+
+.math-frac > span:first-child {
+  width: 100%;
+  padding: 0 3px 1px;
+  border-bottom: 1px solid currentColor;
+  text-align: center;
+}
+
+.math-frac > span:last-child {
+  padding: 1px 3px 0;
+  text-align: center;
+}
+
+.math-root {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.math-root-symbol {
+  padding-right: 1px;
 }
 
 .toc-list {
