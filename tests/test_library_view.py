@@ -169,6 +169,37 @@ def test_main_library_detail_returns_abstract_conclusion_toc_and_pdf_without_com
     assert "commands" not in detail
 
 
+def test_main_library_view_reuses_audit_map_for_poll_and_detail(tmp_path: Path, monkeypatch) -> None:
+    from scholaraio.services import library_view
+    from scholaraio.services.audit import Issue
+
+    papers_root = tmp_path / "data" / "libraries" / "papers"
+    _write_main_paper(
+        papers_root,
+        "Doe-2026-Poll",
+        paper_id="paper-poll",
+        title="Polling paper",
+    )
+    cfg = _build_config({}, tmp_path)
+    calls = {"count": 0}
+
+    def fake_audit(papers_dir: Path):
+        calls["count"] += 1
+        assert papers_dir == papers_root
+        return [Issue("Doe-2026-Poll", "warning", "sample", "Sample warning")]
+
+    monkeypatch.setattr(library_view, "audit_papers", fake_audit)
+
+    first = library_view.build_main_library_view(cfg)
+    second = library_view.build_main_library_view(cfg)
+    detail = library_view.get_main_paper_detail(cfg, "paper-poll")
+
+    assert first["issue_totals"]["warning"] == 1
+    assert second["issue_totals"]["warning"] == 1
+    assert detail["issue_counts"]["warning"] == 1
+    assert calls["count"] == 1
+
+
 def test_main_library_pdf_lookup_does_not_audit_entire_library(tmp_path: Path, monkeypatch) -> None:
     from scholaraio.services import library_view
 

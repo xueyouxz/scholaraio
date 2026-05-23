@@ -6,6 +6,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from time import monotonic
 from typing import TYPE_CHECKING
 from urllib.parse import quote
 
@@ -15,6 +16,9 @@ from scholaraio.stores.proceedings import iter_proceedings_dirs, read_json
 
 if TYPE_CHECKING:
     from scholaraio.core.config import Config
+
+_AUDIT_CACHE_TTL_SECONDS = 30.0
+_AUDIT_CACHE: dict[str, tuple[float, dict[str, list[dict]]]] = {}
 
 
 def _now_iso() -> str:
@@ -87,10 +91,18 @@ def _issue_counts(issues: list[dict]) -> dict[str, int]:
 
 
 def _main_issue_map(papers_dir: Path) -> dict[str, list[dict]]:
+    cache_key = str(papers_dir.resolve())
+    now = monotonic()
+    cached = _AUDIT_CACHE.get(cache_key)
+    if cached and cached[0] > now:
+        return cached[1]
+
     by_dir: dict[str, list[dict]] = defaultdict(list)
     for issue in audit_papers(papers_dir):
         by_dir[issue.paper_id].append(_issue_dict(issue))
-    return by_dir
+    issue_map = dict(by_dir)
+    _AUDIT_CACHE[cache_key] = (now + _AUDIT_CACHE_TTL_SECONDS, issue_map)
+    return issue_map
 
 
 def _invalid_json_issues(paper_id: str, exc: Exception) -> list[dict]:

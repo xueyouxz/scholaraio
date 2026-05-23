@@ -246,6 +246,206 @@ setImmediate(() => console.log(JSON.stringify(context.__result)));
     assert "ID" not in payload["metadataLabels"]
 
 
+def test_library_view_app_ignores_stale_refresh_and_detail_responses() -> None:
+    from scholaraio.interfaces.cli.gui import _static_dir
+
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is required for app.js behavior regression")
+    app_js = (_static_dir() / "app.js").as_posix()
+    script = f"""
+const fs = require("fs");
+const vm = require("vm");
+
+function element(id) {{
+  const classes = new Set();
+  return {{
+    id,
+    dataset: {{}},
+    value: "",
+    checked: false,
+    disabled: false,
+    hidden: false,
+    textContent: "",
+    title: "",
+    className: "",
+    children: [],
+    classList: {{
+      add(name) {{ classes.add(name); }},
+      remove(name) {{ classes.delete(name); }},
+      contains(name) {{ return classes.has(name); }},
+      toggle(name, force) {{
+        const enabled = force === undefined ? !classes.has(name) : Boolean(force);
+        if (enabled) classes.add(name);
+        else classes.delete(name);
+        return enabled;
+      }},
+    }},
+    appendChild(child) {{ this.children.push(child); return child; }},
+    append(...items) {{ this.children.push(...items); }},
+    removeAttribute(name) {{ delete this[name]; }},
+    addEventListener() {{}},
+  }};
+}}
+
+const elements = new Map();
+const tabs = ["main", "proceedings"].map((tab) => {{
+  const el = element(`tab-${{tab}}`);
+  el.dataset.tab = tab;
+  return el;
+}});
+const document = {{
+  body: element("body"),
+  getElementById(id) {{
+    if (!elements.has(id)) elements.set(id, element(id));
+    return elements.get(id);
+  }},
+  createElement(tag) {{
+    return element(tag);
+  }},
+  querySelectorAll(selector) {{
+    if (selector === ".tab") return tabs;
+    return [];
+  }},
+  addEventListener() {{}},
+}};
+const pending = [];
+const context = {{
+  document,
+  pending,
+  navigator: {{ clipboard: {{ writeText: async () => {{}} }} }},
+  controlled: false,
+  fetch: async (url) => {{
+    if (!context.controlled) return {{ ok: true, json: async () => ({{ papers: [], total: 0, issue_totals: {{}} }}) }};
+    return new Promise((resolve) => pending.push({{ url, resolve }}));
+  }},
+  setTimeout,
+  setInterval: () => 1,
+  clearInterval: () => {{}},
+  console,
+}};
+const code = fs.readFileSync({json.dumps(app_js)}, "utf8");
+vm.runInNewContext(`${{code}}
+globalThis.__ready = (async () => {{
+  controlled = true;
+  state.tab = "main";
+  state.rows = {{ main: [], proceedings: [] }};
+  state.payload = {{ main: null, proceedings: null }};
+  const staleRefresh = refreshActive({{ keepSelection: false }});
+  state.tab = "proceedings";
+  pending.shift().resolve({{ ok: true, json: async () => ({{
+    root: "/main",
+    total: 1,
+    issue_totals: {{}},
+    papers: [{{ paper_id: "main-paper", title: "Main paper", has_md: true }}],
+  }}) }});
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  if (pending.length) pending.shift().resolve({{ ok: true, json: async () => ({{ paper_id: "main-paper", title: "Wrong detail" }}) }});
+  await staleRefresh;
+  const refreshMainRows = state.rows.main.map((row) => row.paper_id);
+  const refreshProceedingsRows = state.rows.proceedings.map((row) => row.paper_id);
+
+  state.tab = "main";
+  state.rows.main = [
+    {{ paper_id: "first", title: "First", has_md: true }},
+    {{ paper_id: "second", title: "Second", has_md: true }},
+  ];
+  state.selected.main = "";
+  state.detail = null;
+  const staleDetail = selectRow("first");
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  state.selected.main = "second";
+  pending.shift().resolve({{ ok: true, json: async () => ({{ paper_id: "first", title: "First detail" }}) }});
+  await staleDetail;
+
+  return {{
+    refreshMainRows,
+    refreshProceedingsRows,
+    activeTab: state.tab,
+    selected: state.selected.main,
+    detailTitle: els.detailTitle.textContent,
+    detail: state.detail,
+  }};
+}})();
+`, context);
+context.__ready.then((payload) => console.log(JSON.stringify(payload))).catch((err) => {{
+  console.error(err);
+  process.exit(1);
+}});
+"""
+
+    result = subprocess.run([node, "-e", script], check=True, capture_output=True, text=True)
+
+    payload = json.loads(result.stdout)
+    assert payload["refreshMainRows"] == ["main-paper"]
+    assert payload["refreshProceedingsRows"] == []
+    assert payload["activeTab"] == "main"
+    assert payload["selected"] == "second"
+    assert payload["detailTitle"] != "First detail"
+    assert payload["detail"] is None
+
+
+def test_library_view_app_missing_markdown_status_is_not_clean() -> None:
+    from scholaraio.interfaces.cli.gui import _static_dir
+
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is required for app.js behavior regression")
+    app_js = (_static_dir() / "app.js").as_posix()
+    script = f"""
+const fs = require("fs");
+const vm = require("vm");
+
+function element(id) {{
+  return {{
+    id,
+    dataset: {{}},
+    value: "",
+    checked: false,
+    hidden: false,
+    textContent: "",
+    className: "",
+    classList: {{ toggle() {{}}, add() {{}}, remove() {{}} }},
+    appendChild() {{}},
+    append() {{}},
+    removeAttribute() {{}},
+    addEventListener() {{}},
+  }};
+}}
+const elements = new Map();
+const document = {{
+  getElementById(id) {{
+    if (!elements.has(id)) elements.set(id, element(id));
+    return elements.get(id);
+  }},
+  createElement(tag) {{
+    return element(tag);
+  }},
+  querySelectorAll() {{
+    return [];
+  }},
+  addEventListener() {{}},
+}};
+const context = {{
+  document,
+  navigator: {{ clipboard: {{ writeText: async () => {{}} }} }},
+  fetch: async () => ({{ ok: true, json: async () => ({{ papers: [], total: 0, issue_totals: {{}} }}) }}),
+  setInterval: () => 1,
+  clearInterval: () => {{}},
+  console,
+}};
+const code = fs.readFileSync({json.dumps(app_js)}, "utf8");
+vm.runInNewContext(`${{code}}
+globalThis.__result = statusPills({{ has_md: false, issue_counts: {{}} }}).map((pill) => pill[0]);
+`, context);
+console.log(JSON.stringify(context.__result));
+"""
+
+    result = subprocess.run([node, "-e", script], check=True, capture_output=True, text=True)
+
+    assert json.loads(result.stdout) == ["No MD"]
+
+
 def test_library_view_tab_switch_resets_stale_type_filter() -> None:
     from scholaraio.interfaces.cli.gui import _static_dir
 

@@ -10,6 +10,8 @@ const state = {
   sortDir: "desc",
   pdf: null,
   pdfFullscreen: false,
+  detailRequestSeq: 0,
+  refreshRequestSeq: { main: 0, proceedings: 0 },
   filters: {
     search: "",
     type: "",
@@ -181,7 +183,7 @@ function statusPills(row) {
     const counts = row.issue_counts || {};
     if (counts.error) pills.push([`${counts.error} error`, "severe"]);
     if (counts.warning) pills.push([`${counts.warning} warn`, "warn"]);
-  } else {
+  } else if (row.has_md) {
     pills.push(["clean", "ok"]);
   }
   if (row.has_l3) pills.push(["L3", ""]);
@@ -366,14 +368,23 @@ function openPdf(row) {
 }
 
 async function selectRow(paperId) {
-  state.selected[state.tab] = paperId;
-  renderTable();
+  const requestTab = state.tab;
+  const requestSeq = ++state.detailRequestSeq;
+  state.selected[requestTab] = paperId;
+  if (state.tab === requestTab) renderTable();
   try {
-    const endpoint = state.tab === "main" ? "/api/main/detail" : "/api/proceedings/detail";
-    state.detail = await fetchJson(`${endpoint}?id=${encodeURIComponent(paperId)}`);
-    renderDetail(state.detail);
+    const endpoint = requestTab === "main" ? "/api/main/detail" : "/api/proceedings/detail";
+    const detail = await fetchJson(`${endpoint}?id=${encodeURIComponent(paperId)}`);
+    if (state.tab !== requestTab || state.selected[requestTab] !== paperId || state.detailRequestSeq !== requestSeq) {
+      return;
+    }
+    state.detail = detail;
+    renderDetail(detail);
     setConnection("live", "Live");
   } catch (err) {
+    if (state.tab !== requestTab || state.selected[requestTab] !== paperId || state.detailRequestSeq !== requestSeq) {
+      return;
+    }
     setConnection("error", "Detail failed");
     renderDetail({ title: "Detail unavailable", abstract: String(err), commands: {} });
   }
@@ -387,12 +398,20 @@ function chooseDefaultSelection() {
 }
 
 async function refreshActive({ keepSelection = true } = {}) {
-  const endpoint = state.tab === "main" ? "/api/main/papers" : "/api/proceedings/papers";
+  const requestTab = state.tab;
+  const requestSeq = ++state.refreshRequestSeq[requestTab];
+  const endpoint = requestTab === "main" ? "/api/main/papers" : "/api/proceedings/papers";
   try {
     const payload = await fetchJson(endpoint);
-    state.payload[state.tab] = payload;
-    state.rows[state.tab] = payload.papers || [];
-    if (state.pdf && !state.rows[state.tab].some((row) => row.pdf_url === state.pdf.url)) {
+    if (state.refreshRequestSeq[requestTab] !== requestSeq) {
+      return;
+    }
+    state.payload[requestTab] = payload;
+    state.rows[requestTab] = payload.papers || [];
+    if (state.tab !== requestTab) {
+      return;
+    }
+    if (state.pdf && !state.rows[requestTab].some((row) => row.pdf_url === state.pdf.url)) {
       showRecords();
     }
     renderFilters();
@@ -403,6 +422,9 @@ async function refreshActive({ keepSelection = true } = {}) {
     if (nextSelection) await selectRow(nextSelection);
     else renderDetail(null);
   } catch (err) {
+    if (state.tab !== requestTab) {
+      return;
+    }
     setConnection("error", "Refresh failed");
     els.tableCount.textContent = String(err);
   }
@@ -424,6 +446,7 @@ function switchTab(tab) {
   els.typeFilter.value = "";
   els.volumeFilter.value = "";
   showRecords();
+  state.detailRequestSeq += 1;
   renderDetail(null);
   refreshActive({ keepSelection: true });
 }
