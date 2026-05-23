@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Line-addressable evidence chunk search** ([#35](https://github.com/ZimoLiao/scholaraio/issues/35)): Added `scholaraio index --chunks` and `scholaraio search --chunk` so agents can build a paper-section chunk index from `paper.md` / `meta.json["toc"]` and retrieve source snippets with paper IDs, section titles, line ranges, and normal search filters such as `--year`, `--journal`, and `--type`.
 - **Rights-respecting publisher PDF fetch** ([#98](https://github.com/ZimoLiao/scholaraio/issues/98), [#99](https://github.com/ZimoLiao/scholaraio/issues/99)): Added native `scholaraio fetch-pdf` support for DOI, landing-page URL, direct PDF URL, or title locators, plus `--direct` campus-network mode, safe temporary/single-file `--ingest` handoff, and selected/all-library canonical PDF refetch for already ingested papers.
 - **Read-only local library WebUI**: Added `scholaraio gui`, a packaged local WebUI for browsing the main paper library and proceedings child papers with live refresh, filters, metadata/quality inspection, Markdown-rendered abstracts/conclusions, local-only math rendering, and inline PDF preview/fullscreen controls.
 - **Graphviz DOT/SVG diagram workflow**: Added the Graphviz diagram guide, linked it from the draw skill and writing/CLI docs, and expanded `setup check` to report `Graphviz dot` and `Inkscape` with actionable install guidance for SVG rendering and Beamer insertion.

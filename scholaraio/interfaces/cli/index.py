@@ -37,6 +37,16 @@ def cmd_index(args: argparse.Namespace, cfg) -> None:
         _log_error("Papers directory does not exist: %s", papers_dir)
         sys.exit(1)
 
+    if getattr(args, "chunks", False):
+        from scholaraio.services.chunks import build_chunk_index
+
+        action = "Rebuild chunk index" if args.rebuild else "Build chunk index"
+        _ui(f"{action}: {papers_dir} -> {db_path}")
+        count = build_chunk_index(papers_dir, db_path, rebuild=args.rebuild)
+        _ui(f"Done: indexed {count} chunks.")
+        _ui("Next: run `scholaraio search --chunk <keywords>` to locate evidence snippets.")
+        return
+
     action = "Rebuild index" if args.rebuild else "Build index"
     _ui(f"{action}: {papers_dir} -> {db_path}")
     count = build_index(papers_dir, db_path, rebuild=args.rebuild)

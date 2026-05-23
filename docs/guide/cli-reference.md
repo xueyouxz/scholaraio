@@ -15,7 +15,9 @@ The command groups below are aligned with the current codebase.
 
 ```text
 scholaraio index
+scholaraio index --chunks
 scholaraio search
+scholaraio search --chunk
 scholaraio search-author
 scholaraio show
 scholaraio embed
@@ -25,7 +27,9 @@ scholaraio fsearch
 scholaraio top-cited
 ```
 
-- `search` performs keyword search.
+- `search` performs paper-level keyword search.
+- `index --chunks` builds a line-addressable evidence chunk index from `paper.md` and `meta.json["toc"]`.
+- `search --chunk` searches evidence chunks and returns the source paper, section, line range, and snippet. It supports the normal `search` filters such as `--year`, `--journal`, and `--type`. This is evidence retrieval, not a knowledge graph.
 - `vsearch` performs semantic vector search.
 - `usearch` performs fused keyword + semantic retrieval.
 - `fsearch` searches across the main library, proceedings, explore databases, and arXiv.

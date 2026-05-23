@@ -81,7 +81,7 @@ run the migration in the upgraded checkout that contains your `data/`,
 |--|---------|---------|
 | **PDF Parsing** | Deep structure extraction | Convert PDFs into structured Markdown while preserving formulas, figures, and layout as much as possible |
 | **Not Just Papers** | More than papers | Journal articles, theses, patents, technical reports, standards, and lecture notes — four inbox categories with tailored metadata handling |
-| **Hybrid Search** | Keyword + semantic fusion | Combine full-text and vector retrieval for stronger search results |
+| **Hybrid Search** | Keyword + semantic fusion | Combine full-text and vector retrieval, with optional line-addressable evidence chunk search for precise source snippets |
 | **Topic Discovery** | See what your library is about | Automatically group papers into research themes and use interactive views to grasp the overall structure quickly |
 | **Literature Exploration** | Multi-dimensional discovery | Explore a research direction through journal, topic, author, institution, keyword, year, citation impact, and more |
 | **Citation Graph** | References & impact | Forward citations, backward citations, and shared-reference analysis |

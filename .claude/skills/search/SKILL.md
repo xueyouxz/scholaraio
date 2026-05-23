@@ -11,6 +11,7 @@ description: Use when the user wants to find academic papers, search the local l
 1. 解析用户输入，判断搜索模式：
    - 如果用户明确要求"语义搜索"、"向量搜索"或"vsearch"，使用 `vsearch`
    - 如果用户明确要求"关键词搜索"、"全文搜索"或"FTS"，使用 `search`
+   - 如果用户明确要找“证据片段”、“原文片段”、“行号定位”、“在哪一节/哪几行提到”，使用 `search --chunk`；若 chunk 索引尚未建立，先运行 `index --chunks`
    - 如果用户明确按作者搜索（如"找某某的论文"、"某某发表的"），使用 `search-author`
    - 如果用户要求按引用量排序（如"引用最高的"、"最经典的"、"top cited"），转交 `/citations` skill
    - **默认使用 `usearch`（融合检索）**——同时执行 FTS5 关键词搜索和 FAISS 语义搜索，合并去重排序。两路都命中的论文排名靠前。向量索引不可用时自动降级为纯关键词。
@@ -42,6 +43,11 @@ scholaraio usearch "<查询词>" --limit <N> [--year <Y>] [--journal <J>] [--typ
 **关键词搜索：**
 ```bash
 scholaraio search "<查询词>" --limit <N> [--year <Y>] [--journal <J>] [--type <T>]
+```
+
+**证据片段搜索（返回 paper、section、line range、snippet）：**
+```bash
+scholaraio search --chunk "<查询词>" --limit <N> [--year <Y>] [--journal <J>] [--type <T>]
 ```
 
 **语义搜索：**
@@ -108,6 +114,9 @@ ids, toc, l3_conclusion
 
 用户说："2020年以后关于 drag reduction 的论文"
 → 执行 `usearch "drag reduction" --year 2020-`
+
+用户说："找 subgrid scale model 的原文证据片段，最好有行号"
+→ 若未建 chunk 索引先执行 `index --chunks`，再执行 `search --chunk "subgrid scale model"`
 
 用户说："找 Moin 1982 numerical investigation turbulent channel flow"
 → 执行 `usearch "numerical investigation turbulent channel flow" --year 1982`；必要时再用 `search-author "Moin" --year 1982` 交叉确认，不要执行 `search "P Moin 1982 numerical investigation turbulent channel flow"`

@@ -229,6 +229,16 @@ class TestCliHelpLocalization:
 
         assert "proceedings" in fsearch_help
 
+    def test_index_and_search_help_expose_chunk_evidence_retrieval(self):
+        parser = cli._build_parser()
+        choices = parser._subparsers._group_actions[0].choices
+
+        index_help = choices["index"].format_help()
+        search_help = choices["search"].format_help()
+
+        assert "--chunks" in index_help
+        assert "--chunk" in search_help
+
     def test_publish_site_help_is_english(self):
         parser = cli._build_parser()
         publish_help = parser._subparsers._group_actions[0].choices["publish-site"].format_help()
@@ -931,6 +941,84 @@ class TestUnifiedSearchDegradeWarnings:
         cli.cmd_usearch(args, cfg)
 
         assert any("Vector search is unavailable; falling back to keyword search" in m for m in messages)
+
+
+class TestChunkSearchCli:
+    def test_cmd_index_delegates_to_chunk_index_when_requested(self, tmp_papers, tmp_db, monkeypatch):
+        seen: list[tuple[Path, Path, bool]] = []
+        messages: list[str] = []
+        monkeypatch.setattr(cli, "ui", messages.append)
+        monkeypatch.setattr(
+            "scholaraio.services.chunks.build_chunk_index",
+            lambda papers_dir, db_path, rebuild=False: seen.append((papers_dir, db_path, rebuild)) or 7,
+        )
+
+        cfg = SimpleNamespace(papers_dir=tmp_papers, index_db=tmp_db)
+        args = Namespace(rebuild=True, chunks=True)
+
+        cli.cmd_index(args, cfg)
+
+        assert seen == [(tmp_papers, tmp_db, True)]
+        assert any("indexed 7 chunks" in message for message in messages)
+
+    def test_cmd_search_prints_chunk_line_addresses_and_snippets(self, tmp_db, monkeypatch):
+        messages: list[str] = []
+        seen: dict[str, object] = {}
+        monkeypatch.setattr(cli, "ui", lambda msg="": messages.append(msg))
+        monkeypatch.setattr("scholaraio.services.metrics.get_store", lambda: None)
+        monkeypatch.setattr(cli, "_record_search_metrics", lambda *_args, **_kwargs: None)
+
+        def fake_chunk_search(query, db_path, top_k=20, *, year=None, journal=None, paper_type=None):
+            seen.update(
+                {
+                    "query": query,
+                    "db_path": db_path,
+                    "top_k": top_k,
+                    "year": year,
+                    "journal": journal,
+                    "paper_type": paper_type,
+                }
+            )
+            return [
+                {
+                    "paper_id": "paper-les",
+                    "dir_name": "Lovelace-2026-Chunked-LES",
+                    "title": "Chunked LES evidence retrieval",
+                    "section_title": "1. Methods",
+                    "start_line": 3,
+                    "end_line": 7,
+                    "snippet": "We retain the subgrid coupling term.",
+                }
+            ]
+
+        monkeypatch.setattr("scholaraio.services.chunks.chunk_search", fake_chunk_search)
+
+        cfg = SimpleNamespace(index_db=tmp_db, search=SimpleNamespace(top_k=10))
+        args = Namespace(
+            query=["subgrid", "coupling"],
+            top=3,
+            year="2024",
+            journal="Physics of Fluids",
+            paper_type="review",
+            chunk=True,
+        )
+
+        cli.cmd_search(args, cfg)
+
+        output = "\n".join(messages)
+        assert seen == {
+            "query": "subgrid coupling",
+            "db_path": tmp_db,
+            "top_k": 3,
+            "year": "2024",
+            "journal": "Physics of Fluids",
+            "paper_type": "review",
+        }
+        assert "Chunk search found 1 evidence chunks" in output
+        assert "Lovelace-2026-Chunked-LES" in output
+        assert "1. Methods" in output
+        assert "lines 3-7" in output
+        assert "subgrid coupling" in output
 
     def test_cmd_fsearch_warns_when_main_scope_vector_search_degrades(self, monkeypatch, tmp_path):
         messages: list[str] = []

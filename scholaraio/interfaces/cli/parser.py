@@ -71,6 +71,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_index = sub.add_parser("index", help="Build the FTS5 search index")
     p_index.set_defaults(func=cmd_index)
     p_index.add_argument("--rebuild", action="store_true", help="Clear and rebuild the index")
+    p_index.add_argument("--chunks", action="store_true", help="Build the line-addressable evidence chunk index")
 
     # --- search ---
     p_search = sub.add_parser("search", help="Keyword search")
@@ -78,6 +79,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_search.add_argument("query", nargs="+", help="Search terms")
     _add_result_limit_arg(p_search, "Return at most N results (default: config search.top_k)")
     _add_filter_args(p_search)
+    p_search.add_argument("--chunk", action="store_true", help="Search line-addressable evidence chunks")
 
     # --- search-author ---
     p_sa = sub.add_parser("search-author", help="Search by author name")

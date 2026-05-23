@@ -52,6 +52,22 @@ def _print_search_next_steps() -> None:
     cli_mod._print_search_next_steps()
 
 
+def _print_chunk_result(idx: int, result: dict) -> None:
+    display = result.get("dir_name") or result.get("paper_id") or "?"
+    title = result.get("title") or "?"
+    section = result.get("section_title") or "?"
+    start_line = result.get("start_line") or "?"
+    end_line = result.get("end_line") or "?"
+    snippet = result.get("snippet") or ""
+
+    _ui(f"[{idx}] {display}")
+    _ui(f"     {title}")
+    _ui(f"     {section} | lines {start_line}-{end_line}")
+    if snippet:
+        _ui(f"     {snippet}")
+    _ui()
+
+
 def cmd_search_author(args: argparse.Namespace, cfg) -> None:
     from scholaraio.services.index import search_author
 
@@ -80,11 +96,42 @@ def cmd_search_author(args: argparse.Namespace, cfg) -> None:
 
 
 def cmd_search(args: argparse.Namespace, cfg) -> None:
-    from scholaraio.services.index import search
     from scholaraio.services.metrics import get_store
 
     query = " ".join(args.query)
     t0 = time.monotonic()
+    if getattr(args, "chunk", False):
+        from scholaraio.services.chunks import chunk_search
+
+        try:
+            results = chunk_search(
+                query,
+                cfg.index_db,
+                top_k=_resolve_top(args, cfg.search.top_k),
+                year=args.year,
+                journal=args.journal,
+                paper_type=args.paper_type,
+            )
+        except FileNotFoundError as e:
+            _log_error("%s", e)
+            sys.exit(1)
+
+        elapsed = time.monotonic() - t0
+        store = get_store()
+        _record_search_metrics(store, "chunk-search", query, results, elapsed, args)
+
+        if not results:
+            _ui(f'No evidence chunks found for "{query}".')
+            return
+
+        _ui(f'Chunk search found {len(results)} evidence chunks ("{query}"):\n')
+        for i, r in enumerate(results, start=1):
+            _print_chunk_result(i, r)
+        _ui("Next: run `scholaraio show <paper-id> --layer 4` and inspect the reported line range.")
+        return
+
+    from scholaraio.services.index import search
+
     try:
         results = search(
             query,
