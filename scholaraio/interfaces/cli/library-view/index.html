@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ScholarAIO Library</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="status-dot" id="connection-dot"></div>
+        <div>
+          <h1>ScholarAIO Library</h1>
+          <div class="topline">
+            <span id="connection-label">Connecting</span>
+            <span class="divider"></span>
+            <span id="updated-at">--</span>
+          </div>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Library source">
+        <button class="tab is-active" id="tab-main" data-tab="main" type="button">Main Papers</button>
+        <button class="tab" id="tab-proceedings" data-tab="proceedings" type="button">Proceedings</button>
+      </nav>
+    </header>
+
+    <section class="workspace">
+      <aside class="filter-panel">
+        <section class="monitor-card">
+          <div class="monitor-card-header">
+            <div class="monitor-kicker">Source</div>
+            <div class="monitor-title" id="source-title">Main Papers</div>
+            <div class="source-root-row">
+              <div class="monitor-subtitle" id="source-root">--</div>
+              <button class="soft-button compact-button" id="source-copy-button" type="button">Copy</button>
+            </div>
+          </div>
+          <div class="metric-list">
+            <div class="metric-row">
+              <span class="metric-label">Records</span>
+              <span class="metric-value" id="metric-total">--</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Errors</span>
+              <span class="metric-value severe" id="metric-errors">--</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Warnings</span>
+              <span class="metric-value warn" id="metric-warnings">--</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="monitor-card filter-card">
+          <div class="monitor-kicker">Filter</div>
+          <label class="field-label" for="search-input">Search</label>
+          <input class="text-input" id="search-input" type="search" autocomplete="off" placeholder="Title, author, DOI">
+
+          <label class="field-label" for="type-filter">Type</label>
+          <select class="select-input" id="type-filter">
+            <option value="">All types</option>
+          </select>
+
+          <label class="field-label" for="volume-filter" id="volume-filter-label">Volume</label>
+          <select class="select-input" id="volume-filter">
+            <option value="">All volumes</option>
+          </select>
+
+          <label class="check-row">
+            <input id="filter-issues" type="checkbox">
+            <span>Has audit issues</span>
+          </label>
+          <label class="check-row">
+            <input id="filter-missing-md" type="checkbox">
+            <span>Missing Markdown</span>
+          </label>
+        </section>
+      </aside>
+
+      <section class="table-panel" id="table-panel">
+        <div class="table-toolbar">
+          <div id="records-toolbar-title">
+            <div class="monitor-kicker">Records</div>
+            <div class="table-count" id="table-count">--</div>
+          </div>
+          <div class="pdf-toolbar-title" id="pdf-toolbar-title" hidden>
+            <button class="soft-button" id="pdf-back-button" type="button">Back to records</button>
+            <button class="soft-button" id="pdf-fullscreen-button" type="button">Fullscreen</button>
+            <div>
+              <div class="monitor-kicker">PDF</div>
+              <div class="table-count" id="pdf-title">--</div>
+            </div>
+          </div>
+          <button class="soft-button" id="refresh-button" type="button">Refresh</button>
+        </div>
+        <div class="table-wrap" id="records-view">
+          <table>
+            <thead>
+              <tr>
+                <th data-sort="title">Title</th>
+                <th data-sort="authors_text">Authors</th>
+                <th data-sort="year">Year</th>
+                <th data-sort="paper_type">Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="paper-table-body"></tbody>
+          </table>
+          <div class="empty-state" id="empty-state" hidden>No records.</div>
+        </div>
+        <div class="pdf-viewer" id="pdf-viewer" hidden>
+          <iframe id="pdf-frame" title="PDF preview"></iframe>
+        </div>
+      </section>
+
+      <aside class="detail-panel">
+        <section class="monitor-card detail-card">
+          <div class="monitor-card-header">
+            <div class="monitor-kicker">Inspector</div>
+            <div class="monitor-title" id="detail-title">Select a record</div>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-title">Metadata</div>
+            <dl class="metadata-grid" id="metadata-grid"></dl>
+          </div>
+
+          <details class="detail-section" open>
+            <summary class="section-title">Abstract</summary>
+            <div class="detail-text markdown-body" id="detail-abstract">--</div>
+          </details>
+
+          <details class="detail-section">
+            <summary class="section-title">Conclusion</summary>
+            <div class="detail-text markdown-body" id="detail-conclusion">--</div>
+          </details>
+
+          <details class="detail-section">
+            <summary class="section-title">TOC</summary>
+            <div class="toc-list" id="toc-list"></div>
+          </details>
+
+          <div class="detail-section">
+            <div class="section-title">Quality</div>
+            <div class="issue-list" id="issue-list"></div>
+          </div>
+
+        </section>
+      </aside>
+    </section>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

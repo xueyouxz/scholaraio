@@ -82,10 +82,10 @@ zotero:
 ## 补充 PDF（单篇）
 
 ```bash
-scholaraio attach-pdf <paper-id> <path/to/paper.pdf>
+scholaraio attach-pdf <paper-id> <path/to/paper.pdf> [--force]
 ```
 
-自动调用 MinerU 转换 PDF → markdown，补全缺失的 abstract，增量更新 embed + index。
+自动把原始 PDF 保存到论文目录中（与 `paper.md` 同级，使用论文目录同名 stem），调用 MinerU 转换 PDF → markdown，补全缺失的 abstract，增量更新 embed + index。若目标目录已有 canonical PDF，默认拒绝覆盖；确认要替换时使用 `--force`。
 
 ## 批量补转 PDF（已入库论文）
 

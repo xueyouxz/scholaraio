@@ -33,6 +33,9 @@ def _batch_convert_pdfs(cfg, *, enrich: bool = False) -> None:
 
 
 def cmd_attach_pdf(args: argparse.Namespace, cfg) -> None:
+    from scholaraio.stores.papers import copy_pdf_to_paper_dir
+    from scholaraio.stores.papers import pdf_path as canonical_pdf_path
+
     paper_d = _resolve_paper(args.paper_id, cfg)
     pdf_path = Path(args.pdf_path)
 
@@ -42,11 +45,20 @@ def cmd_attach_pdf(args: argparse.Namespace, cfg) -> None:
 
     existing_md = paper_d / "paper.md"
     dry_run = getattr(args, "dry_run", False)
+    force = getattr(args, "force", False)
+
+    target_pdf = canonical_pdf_path(paper_d)
+    replacing_pdf = target_pdf.exists() and pdf_path.resolve() != target_pdf.resolve()
 
     if dry_run:
         _ui(f"[dry-run] Paper directory: {paper_d}")
         _ui(f"[dry-run] PDF source: {pdf_path}")
+        _ui(f"[dry-run] Target PDF: {target_pdf}")
         _ui(f"[dry-run] Target paper.md: {paper_d / 'paper.md'}")
+        if replacing_pdf and not force:
+            _ui("[dry-run] Warning: canonical PDF already exists and will not be overwritten without --force")
+        elif replacing_pdf:
+            _ui("[dry-run] Warning: canonical PDF already exists and will be replaced because --force was used")
         if existing_md.exists():
             _ui("[dry-run] Warning: paper.md already exists and will be overwritten")
         _ui("[dry-run] Will run: MinerU conversion -> abstract backfill -> re-embed -> rebuild index")
@@ -56,9 +68,14 @@ def cmd_attach_pdf(args: argparse.Namespace, cfg) -> None:
     if existing_md.exists():
         _ui(f"Warning: {paper_d.name} already has paper.md and it will be overwritten")
 
-    # Copy PDF to paper directory.
-    dest_pdf = paper_d / pdf_path.name
-    shutil.copy2(str(pdf_path), str(dest_pdf))
+    if replacing_pdf and not force:
+        _ui(f"Error: {paper_d.name} already has PDF {target_pdf.name}; use --force to replace it")
+        sys.exit(1)
+    if replacing_pdf:
+        _ui(f"Warning: replacing existing PDF: {target_pdf.name}")
+
+    # Copy PDF to paper directory using the same basename as the paper directory.
+    dest_pdf = copy_pdf_to_paper_dir(pdf_path, paper_d)
     _ui(f"Copied PDF: {dest_pdf.name}")
 
     # Convert PDF -> markdown via MinerU.
@@ -215,10 +232,6 @@ def cmd_attach_pdf(args: argparse.Namespace, cfg) -> None:
             if target.exists():
                 shutil.rmtree(target)
             img_dir.rename(target)
-
-    # Clean up the copied PDF (we only need the markdown).
-    if dest_pdf.exists() and dest_pdf.name != "paper.pdf":
-        dest_pdf.unlink()
 
     _ui(f"Generated paper.md: {paper_d.name}/")
 

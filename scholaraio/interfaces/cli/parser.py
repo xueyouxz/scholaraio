@@ -58,6 +58,7 @@ def _build_parser() -> argparse.ArgumentParser:
     cmd_backup = cli_mod.cmd_backup
     cmd_metrics = cli_mod.cmd_metrics
     cmd_publish_site = cli_mod.cmd_publish_site
+    cmd_gui = cli_mod.cmd_gui
 
     parser = argparse.ArgumentParser(
         prog="scholaraio",
@@ -431,6 +432,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_ap.add_argument("paper_id", help="Paper ID (directory name / UUID / DOI)")
     p_ap.add_argument("pdf_path", help="PDF file path")
     p_ap.add_argument("--dry-run", action="store_true", help="Preview planned actions without running them")
+    p_ap.add_argument("--force", action="store_true", help="Replace an existing canonical PDF before conversion")
 
     # --- citation-check ---
     p_cc = sub.add_parser("citation-check", help="Verify whether citations in text exist in the local library")
@@ -747,6 +749,17 @@ def _build_parser() -> argparse.ArgumentParser:
     p_metrics.add_argument("--category", default="llm", help="Event category (llm/api/step; default: llm)")
     p_metrics.add_argument("--since", default=None, help="Start time in ISO format, for example 2026-03-01")
     p_metrics.add_argument("--summary", action="store_true", help="Only show aggregate statistics")
+
+    # --- gui ---
+    p_gui = sub.add_parser(
+        "gui",
+        help="Start the local read-only library WebUI",
+        description="Start the local read-only library WebUI",
+    )
+    p_gui.set_defaults(func=cmd_gui)
+    p_gui.add_argument("--host", default="127.0.0.1", help="Bind host (default: 127.0.0.1)")
+    p_gui.add_argument("--port", type=int, default=8765, help="Bind port (default: 8765)")
+    p_gui.add_argument("--no-open", action="store_true", help="Do not open the browser automatically")
 
     # --- style ---
     p_style = sub.add_parser("style", help="Manage citation styles")

@@ -92,6 +92,7 @@ High-signal canonical implementation pointers:
 - `scholaraio setup check`
 - `scholaraio search --help`
 - `scholaraio show --help`
+- `scholaraio gui --help`
 - `scholaraio pipeline --help`
 - `scholaraio ws --help`
 - `scholaraio migrate --help`

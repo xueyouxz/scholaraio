@@ -49,7 +49,7 @@ scholaraio enrich-l3
 scholaraio backfill-abstract
 scholaraio refetch
 scholaraio translate
-scholaraio attach-pdf
+scholaraio attach-pdf [--dry-run] [--force]
 ```
 
 - `pipeline` is the main composable ingest entrypoint.
@@ -61,6 +61,7 @@ scholaraio attach-pdf
 - `patent-fetch` downloads a patent PDF into the configured patent inbox for the normal patent ingest flow.
 - `refetch` refreshes citation counts, bibliographic metadata, and structured `references` for already ingested papers.
 - `refetch --references-only` / `--refs-only` limits the run to DOI papers whose `references` field is still empty; in single-paper mode it only updates `references`.
+- `attach-pdf` attaches a source PDF to an existing paper directory, stores it beside `paper.md` using the paper directory stem, and regenerates Markdown. It refuses to replace an existing canonical PDF unless `--force` is supplied.
 - Current preset values are `full`, `ingest`, `enrich`, and `reindex`.
 - Run `scholaraio pipeline --help` for pipeline options such as `--steps`, `--dry-run`, `--no-api`, and `--rebuild`.
 
@@ -78,13 +79,14 @@ scholaraio explore
 - Use `topics` for BERTopic-based topic modeling and exploration.
 - Use `explore` for OpenAlex-backed literature exploration outside the main library.
 
-## Import, Export, Publish, And Workspaces
+## Import, Export, Browse, And Workspaces
 
 ```text
 scholaraio import-endnote
 scholaraio import-zotero
 scholaraio export
 scholaraio publish-site
+scholaraio gui
 scholaraio ws
 ```
 
@@ -105,6 +107,7 @@ scholaraio migrate finalize --migration-id <id> --confirm
 - `import-endnote` and `import-zotero` bring existing libraries into ScholarAIO.
 - `export` handles BibTeX, RIS, Markdown, and DOCX export.
 - `publish-site` generates a static site from audited `published/*/metadata.json` archives, copying PDF/source assets by default and supporting `--symlink` for local preview.
+- `gui` starts a local read-only WebUI for browsing the main paper library and proceedings child papers with live refresh, audit status, Markdown-rendered abstracts/conclusions, and local PDF preview. The WebUI serves only packaged local assets and does not load remote runtime scripts.
 - `ws` manages paper subsets for focused projects and writing workflows.
 
 ## Scientific Runtime And Documents

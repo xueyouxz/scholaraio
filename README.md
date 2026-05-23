@@ -86,6 +86,7 @@ run the migration in the upgraded checkout that contains your `data/`,
 | **Literature Exploration** | Multi-dimensional discovery | Explore a research direction through journal, topic, author, institution, keyword, year, citation impact, and more |
 | **Citation Graph** | References & impact | Forward citations, backward citations, and shared-reference analysis |
 | **Layered Reading** | Read on demand | Start with metadata or the abstract, then move into conclusions or full text only when you need to |
+| **Local Library WebUI** | Browse and inspect | Open a read-only local UI for records, audit status, Markdown abstracts/conclusions, proceedings children, and PDFs without exposing library data to remote scripts |
 | **Multi-Source Import** | Connect your existing library | Import directly from reference managers, PDFs, and Markdown without rebuilding your library from scratch |
 | **Workspaces** | Organize by project | Manage paper subsets with scoped search and BibTeX export |
 | **Multi-Format Export** | BibTeX, RIS, Markdown, DOCX | Export your full library or a workspace for Zotero, Endnote, submission, or sharing |

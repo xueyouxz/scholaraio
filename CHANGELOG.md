@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Read-only local library WebUI**: Added `scholaraio gui`, a packaged local WebUI for browsing the main paper library and proceedings child papers with live refresh, filters, metadata/quality inspection, Markdown-rendered abstracts/conclusions, local-only math rendering, and inline PDF preview/fullscreen controls.
 - **Graphviz DOT/SVG diagram workflow**: Added the Graphviz diagram guide, linked it from the draw skill and writing/CLI docs, and expanded `setup check` to report `Graphviz dot` and `Inkscape` with actionable install guidance for SVG rendering and Beamer insertion.
 - **Paper2Any MCP sidecar integration**: Added `scholaraio paper2any` setup, serve, status, and smoke commands, a lightweight MCP sidecar for Paper2Any conversion workflows, configuration and setup diagnostics for the extension checkout and backend API key, and user/agent documentation for running the sidecar from ScholarAIO.
 
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Paper PDF preservation during ingest and repair**: Kept original PDFs beside `paper.md` in the canonical paper directory, using the paper directory stem for the PDF filename, avoided overwriting an existing curated PDF when a duplicate DOI path only needs to restore missing Markdown, and made `attach-pdf` refuse to replace an existing canonical PDF unless `--force` is supplied.
+- **Local WebUI robustness and privacy**: Hardened the WebUI against malformed metadata, stale async list/detail responses, full-library re-audits on every poll, non-ASCII PDF filenames, large PDF buffering, stale PDF toolbar state, stale type filters, and remote runtime script loading.
 - **Diagram CLI output noise**: Stopped service-layer diagram generation logs from reusing the user-facing `Generated:` prefix, so `diagram --from-text` reports the generated artifact only once.
 - **Local MinerU batch image assets**: Saved images returned by the local MinerU API into per-PDF `<pdf_stem>_images/` directories and rewrote Markdown references accordingly, preventing `cmd_batch` runs that share one output directory from overwriting generic image names such as `image_1.png`.
 

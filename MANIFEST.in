@@ -3,6 +3,8 @@ include README.md
 include CHANGELOG.md
 include CITATION.cff
 
+recursive-include scholaraio/interfaces/cli/library-view *.css *.html *.js
+
 prune build
 prune data
 prune dist

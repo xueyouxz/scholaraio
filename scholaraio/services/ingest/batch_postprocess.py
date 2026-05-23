@@ -51,9 +51,11 @@ def postprocess_convert(pdir: Path, pdf_path: Path, result) -> None:
                 shutil.rmtree(target)
             img_dir.rename(target)
 
-    # Clean up source PDF
-    if pdf_path.exists() and pdf_path.name != "paper.pdf":
-        pdf_path.unlink()
+    # Preserve the source PDF under the paper-directory basename.
+    if pdf_path.exists():
+        from scholaraio.stores.papers import normalize_pdf_name
+
+        normalize_pdf_name(pdir, pdf_path)
 
 
 def batch_postprocess(

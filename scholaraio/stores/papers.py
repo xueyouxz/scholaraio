@@ -13,6 +13,7 @@ papers.py — 论文目录结构的唯一真相源
 from __future__ import annotations
 
 import json
+import shutil
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
@@ -31,6 +32,61 @@ def meta_path(papers_dir: Path, dir_name: str) -> Path:
 def md_path(papers_dir: Path, dir_name: str) -> Path:
     """Return the paper.md path for a paper."""
     return papers_dir / dir_name / "paper.md"
+
+
+def pdf_path(paper_d: Path) -> Path:
+    """Return the canonical PDF path for a paper directory."""
+    return paper_d / f"{paper_d.name}.pdf"
+
+
+def find_pdf(paper_d: Path) -> Path | None:
+    """Return the best available PDF for a paper directory, if present."""
+    canonical = pdf_path(paper_d)
+    if canonical.is_file():
+        return canonical
+    legacy = paper_d / "paper.pdf"
+    if legacy.is_file():
+        return legacy
+    pdfs = sorted(p for p in paper_d.glob("*.pdf") if p.is_file())
+    return pdfs[0] if pdfs else None
+
+
+def copy_pdf_to_paper_dir(src_pdf: Path, paper_d: Path) -> Path:
+    """Copy a PDF into a paper directory using the directory-name convention."""
+    dest = pdf_path(paper_d)
+    paper_d.mkdir(parents=True, exist_ok=True)
+    if src_pdf.resolve() != dest.resolve():
+        shutil.copy2(str(src_pdf), str(dest))
+    return dest
+
+
+def move_pdf_to_paper_dir(src_pdf: Path, paper_d: Path) -> Path:
+    """Move a PDF into a paper directory using the directory-name convention."""
+    dest = pdf_path(paper_d)
+    paper_d.mkdir(parents=True, exist_ok=True)
+    if src_pdf.resolve() != dest.resolve():
+        if dest.exists():
+            dest.unlink()
+        shutil.move(str(src_pdf), str(dest))
+    return dest
+
+
+def normalize_pdf_name(paper_d: Path, current_pdf: Path) -> Path:
+    """Normalize an in-directory PDF to the canonical paper-directory filename.
+
+    When the canonical destination already exists, the non-canonical
+    ``current_pdf`` is removed so an existing curated PDF is not overwritten.
+    """
+    dest = pdf_path(paper_d)
+    if current_pdf.resolve() == dest.resolve():
+        return dest
+    if not current_pdf.exists():
+        return dest
+    if dest.exists():
+        current_pdf.unlink()
+        return dest
+    current_pdf.rename(dest)
+    return dest
 
 
 def scrub_marker_path(paper_d: Path) -> Path:

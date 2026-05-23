@@ -95,6 +95,9 @@ where = ["."]
 include = ["scholaraio*"]
 namespaces = false
 
+[tool.setuptools.package-data]
+"scholaraio.interfaces.cli" = ["library-view/*"]
+
 # ---------- ruff ----------
 [tool.ruff]
 target-version = "py310"

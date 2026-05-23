@@ -237,6 +237,15 @@ class TestCliHelpLocalization:
         assert "--out-dir" in publish_help
         assert "--symlink" in publish_help
 
+    def test_gui_help_exposes_read_only_local_webui(self):
+        parser = cli._build_parser()
+        gui_help = parser._subparsers._group_actions[0].choices["gui"].format_help()
+
+        assert "Start the local read-only library WebUI" in gui_help
+        assert "--host" in gui_help
+        assert "--port" in gui_help
+        assert "--no-open" in gui_help
+
     def test_style_list_descriptions_are_english(self, capsys):
         cli.cmd_style(Namespace(style_sub="list"), _build_config({}, Path.cwd()))
 
@@ -1884,6 +1893,36 @@ class TestTopicCliErrors:
 
 
 class TestAttachPdfFallback:
+    def test_attach_pdf_refuses_to_overwrite_existing_pdf_without_force(self, tmp_path, monkeypatch):
+        paper_dir = tmp_path / "papers" / "Smith-2023-Test"
+        paper_dir.mkdir(parents=True)
+        (paper_dir / "meta.json").write_text("{}", encoding="utf-8")
+        existing_pdf = paper_dir / "Smith-2023-Test.pdf"
+        existing_pdf.write_bytes(b"%PDF-curated\n")
+        src_pdf = tmp_path / "input.pdf"
+        src_pdf.write_bytes(b"%PDF-new\n")
+        messages: list[str] = []
+
+        cfg = SimpleNamespace(papers_dir=tmp_path / "papers")
+        monkeypatch.setattr(cli, "_resolve_paper", lambda *_: paper_dir)
+        monkeypatch.setattr(cli, "ui", messages.append)
+
+        args = Namespace(paper_id="paper-1", pdf_path=str(src_pdf), dry_run=False, force=False)
+        with pytest.raises(SystemExit) as exc:
+            cli.cmd_attach_pdf(args, cfg)
+
+        assert exc.value.code == 1
+        assert existing_pdf.read_bytes() == b"%PDF-curated\n"
+        assert src_pdf.read_bytes() == b"%PDF-new\n"
+        assert any("--force" in msg for msg in messages)
+
+    def test_attach_pdf_parser_accepts_force(self):
+        from scholaraio.interfaces.cli.parser import _build_parser
+
+        args = _build_parser().parse_args(["attach-pdf", "paper-1", "paper.pdf", "--force"])
+
+        assert args.force is True
+
     def test_attach_pdf_falls_back_without_cloud_key(self, tmp_path, monkeypatch):
         paper_dir = tmp_path / "papers" / "Smith-2023-Test"
         paper_dir.mkdir(parents=True)
@@ -1933,9 +1972,10 @@ class TestAttachPdfFallback:
         args = Namespace(paper_id="paper-1", pdf_path=str(src_pdf), dry_run=False)
         cli.cmd_attach_pdf(args, cfg)
 
-        assert calls == [(paper_dir / "input.pdf", paper_dir / "paper.md")]
+        expected_pdf = paper_dir / "Smith-2023-Test.pdf"
+        assert calls == [(expected_pdf, paper_dir / "paper.md")]
         assert (paper_dir / "paper.md").read_text(encoding="utf-8") == "fallback attach ok\n"
-        assert not (paper_dir / "input.pdf").exists()
+        assert expected_pdf.read_bytes() == b"%PDF-1.4\n"
 
     def test_attach_pdf_prefers_configured_fallback_without_result_object(self, tmp_path, monkeypatch):
         paper_dir = tmp_path / "papers" / "Smith-2023-Test"
@@ -1997,7 +2037,9 @@ class TestAttachPdfFallback:
         args = Namespace(paper_id="paper-1", pdf_path=str(src_pdf), dry_run=False)
         cli.cmd_attach_pdf(args, cfg)
 
-        assert calls == [(paper_dir / "input.pdf", paper_dir / "paper.md")]
+        expected_pdf = paper_dir / "Smith-2023-Test.pdf"
+        assert calls == [(expected_pdf, paper_dir / "paper.md")]
+        assert expected_pdf.read_bytes() == b"%PDF-1.4\n"
         assert (paper_dir / "paper.md").read_text(encoding="utf-8") == "preferred attach ok\n"
 
     def test_attach_pdf_cloud_does_not_split_when_under_new_limits(self, tmp_path, monkeypatch):

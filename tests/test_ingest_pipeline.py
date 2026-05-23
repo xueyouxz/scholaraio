@@ -492,6 +492,45 @@ def test_move_to_pending_moves_files_and_writes_marker(tmp_path: Path):
     assert marker["extracted_metadata"]["doi"] == "10.1000/pending"
 
 
+def test_step_ingest_preserves_pdf_with_paper_directory_name(tmp_path: Path, monkeypatch):
+    from scholaraio.services.ingest.inbox_steps import step_ingest
+
+    inbox_dir = tmp_path / "inbox"
+    papers_dir = tmp_path / "papers"
+    inbox_dir.mkdir()
+    pdf_path = inbox_dir / "source-download.pdf"
+    md_path = inbox_dir / "source-download.md"
+    pdf_path.write_bytes(b"%PDF-source")
+    md_path.write_text("# Preserved PDF\n\nBody", encoding="utf-8")
+    cfg = SimpleNamespace(_root=tmp_path)
+
+    monkeypatch.setattr(
+        "scholaraio.services.ingest_metadata.generate_new_stem",
+        lambda _meta: "Doe-2026-Preserved-PDF",
+    )
+    monkeypatch.setattr("scholaraio.stores.papers.generate_uuid", lambda: "uuid-1")
+    monkeypatch.setattr("scholaraio.services.ingest.registry.update_registry", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("scholaraio.services.ingest.pipeline._update_registry", lambda *_args, **_kwargs: None)
+
+    ctx = InboxCtx(
+        pdf_path=pdf_path,
+        inbox_dir=inbox_dir,
+        papers_dir=papers_dir,
+        existing_dois={},
+        cfg=cfg,
+        opts={},
+        md_path=md_path,
+        meta=PaperMetadata(title="Preserved PDF", doi="10.1000/preserved", year=2026, abstract="Already extracted."),
+    )
+
+    assert step_ingest(ctx) == StepResult.OK
+
+    paper_dir = papers_dir / "Doe-2026-Preserved-PDF"
+    assert (paper_dir / "paper.md").exists()
+    assert (paper_dir / "Doe-2026-Preserved-PDF.pdf").read_bytes() == b"%PDF-source"
+    assert not pdf_path.exists()
+
+
 def test_ingest_proceedings_ctx_dry_run_marks_skipped_without_deleting_md(tmp_path: Path):
     from scholaraio.services.ingest.proceedings import ingest_proceedings_ctx
 

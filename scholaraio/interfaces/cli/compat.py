@@ -41,6 +41,7 @@ from scholaraio.interfaces.cli.citation_check import cmd_citation_check
 from scholaraio.interfaces.cli.citations import cmd_top_cited
 from scholaraio.interfaces.cli.document import cmd_document
 from scholaraio.interfaces.cli.graph import cmd_citing, cmd_refs, cmd_shared_refs
+from scholaraio.interfaces.cli.gui import cmd_gui
 from scholaraio.interfaces.cli.import_endnote import cmd_import_endnote
 from scholaraio.interfaces.cli.index import cmd_index
 from scholaraio.interfaces.cli.insights import cmd_insights
@@ -186,6 +187,7 @@ __all__ = [
     "cmd_explore",
     "cmd_export",
     "cmd_fsearch",
+    "cmd_gui",
     "cmd_import_endnote",
     "cmd_import_zotero",
     "cmd_index",

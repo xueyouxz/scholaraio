@@ -1387,6 +1387,7 @@ def test_internal_cli_wiring_commands_live_in_interface_namespace() -> None:
         ("cmd_explore", "scholaraio.interfaces.cli.explore"),
         ("cmd_ingest_link", "scholaraio.interfaces.cli.ingest_link"),
         ("cmd_publish_site", "scholaraio.interfaces.cli.publish"),
+        ("cmd_gui", "scholaraio.interfaces.cli.gui"),
         ("cmd_patent_fetch", "scholaraio.interfaces.cli.patent"),
         ("cmd_patent_search", "scholaraio.interfaces.cli.patent"),
         ("cmd_attach_pdf", "scholaraio.interfaces.cli.attach_pdf"),

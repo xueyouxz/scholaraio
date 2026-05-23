@@ -55,6 +55,54 @@ def test_step_dedup_treats_stale_registry_as_new(tmp_path: Path):
     assert md.exists()
 
 
+def test_step_dedup_restores_missing_md_without_overwriting_existing_pdf(tmp_path: Path, monkeypatch):
+    """Duplicate DOI repair must not replace an existing paper PDF."""
+    papers_dir = tmp_path / "papers"
+    existing_dir = papers_dir / "Smith-2024-Existing"
+    existing_dir.mkdir(parents=True)
+    existing_json = existing_dir / "meta.json"
+    existing_json.write_text('{"doi": "10.1234/existing"}', encoding="utf-8")
+    existing_pdf = existing_dir / "Smith-2024-Existing.pdf"
+    existing_pdf.write_bytes(b"curated pdf")
+
+    inbox_dir = tmp_path / "inbox"
+    inbox_dir.mkdir()
+    duplicate_pdf = inbox_dir / "duplicate.pdf"
+    duplicate_pdf.write_bytes(b"incoming duplicate pdf")
+    duplicate_md = inbox_dir / "duplicate.md"
+    duplicate_md.write_text("# Restored markdown\n", encoding="utf-8")
+
+    monkeypatch.setattr("scholaraio.services.ingest.pipeline._repair_abstract", lambda *a, **k: None)
+
+    ctx = InboxCtx(
+        pdf_path=duplicate_pdf,
+        inbox_dir=inbox_dir,
+        papers_dir=papers_dir,
+        pending_dir=tmp_path / "pending",
+        existing_dois={"10.1234/existing": existing_json},
+        existing_pub_nums={},
+        cfg=Config(_root=tmp_path),
+        opts={"no_api": True},
+        md_path=duplicate_md,
+        meta=PaperMetadata(
+            title="Existing",
+            doi="10.1234/existing",
+            first_author_lastname="Smith",
+            year=2024,
+        ),
+    )
+
+    assert step_dedup(ctx) == StepResult.FAIL
+    assert ctx.status == "duplicate"
+    assert (existing_dir / "paper.md").read_text(encoding="utf-8") == "# Restored markdown\n"
+    assert existing_pdf.read_bytes() == b"curated pdf"
+
+    pending_pdf = tmp_path / "pending" / "duplicate" / "duplicate.pdf"
+    assert pending_pdf.read_bytes() == b"incoming duplicate pdf"
+    pending_marker = pending_pdf.with_name("pending.json").read_text(encoding="utf-8")
+    assert "duplicate" in pending_marker
+
+
 def test_process_inbox_isolates_step_exceptions(tmp_path: Path, monkeypatch):
     """When one file crashes in a step, the rest of the batch continues."""
     inbox_dir = tmp_path / "inbox"
