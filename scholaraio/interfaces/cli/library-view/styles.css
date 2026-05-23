@@ -615,7 +615,7 @@ summary.section-title {
 }
 
 .markdown-body {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .markdown-body p,
@@ -653,7 +653,7 @@ summary.section-title {
   text-decoration: underline;
 }
 
-.markdown-body mjx-container {
+.markdown-body mjx-container[display="true"] {
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;

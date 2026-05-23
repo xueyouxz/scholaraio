@@ -145,7 +145,7 @@ function markdownToHtml(value) {
   let list = [];
   const flushParagraph = () => {
     if (!paragraph.length) return;
-    blocks.push(`<p>${renderInlineMarkdown(paragraph.join("\n")).replace(/\n/g, "<br>")}</p>`);
+    blocks.push(`<p>${renderInlineMarkdown(paragraph.map((line) => line.trim()).join(" "))}</p>`);
     paragraph = [];
   };
   const flushList = () => {

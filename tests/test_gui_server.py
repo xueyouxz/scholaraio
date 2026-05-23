@@ -529,6 +529,87 @@ setImmediate(() => console.log(JSON.stringify(context.__result)));
     assert payload["mathNodes"] == ["detail-abstract", "detail-conclusion"]
 
 
+def test_library_view_app_treats_single_newlines_as_soft_breaks_in_detail_text() -> None:
+    from scholaraio.interfaces.cli.gui import _static_dir
+
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is required for app.js behavior regression")
+    app_js = (_static_dir() / "app.js").as_posix()
+    abstract = json.dumps("We estimate\n$E_i = mc^2$\nfrom extracted features.")
+    script = f"""
+const fs = require("fs");
+const vm = require("vm");
+
+function element(id) {{
+  return {{
+    id,
+    dataset: {{}},
+    value: "",
+    checked: false,
+    hidden: false,
+    textContent: "",
+    innerHTML: "",
+    className: "",
+    classList: {{ toggle() {{}}, add() {{}}, remove() {{}} }},
+    children: [],
+    appendChild(child) {{ this.children.push(child); return child; }},
+    append(...items) {{ this.children.push(...items); }},
+    removeAttribute() {{}},
+    addEventListener() {{}},
+  }};
+}}
+const elements = new Map();
+const document = {{
+  getElementById(id) {{
+    if (!elements.has(id)) elements.set(id, element(id));
+    return elements.get(id);
+  }},
+  createElement(tag) {{
+    return element(tag);
+  }},
+  querySelectorAll() {{
+    return [];
+  }},
+  addEventListener() {{}},
+}};
+const context = {{
+  document,
+  __abstract: {abstract},
+  navigator: {{ clipboard: {{ writeText: async () => {{}} }} }},
+  fetch: async () => ({{ ok: true, json: async () => ({{ papers: [], total: 0, issue_totals: {{}} }}) }}),
+  setInterval: () => 1,
+  clearInterval: () => {{}},
+  console,
+}};
+const code = fs.readFileSync({json.dumps(app_js)}, "utf8");
+vm.runInNewContext(`${{code}}
+renderDetail({{
+  title: "Wrapped formula paper",
+  abstract: globalThis.__abstract,
+  l3_conclusion: ""
+}});
+globalThis.__result = els.detailAbstract.innerHTML;
+`, context);
+console.log(JSON.stringify(context.__result));
+"""
+
+    result = subprocess.run([node, "-e", script], check=True, capture_output=True, text=True)
+
+    html = json.loads(result.stdout)
+    assert "<br>" not in html
+    assert "We estimate $E_i = mc^2$ from extracted features." in html
+
+
+def test_library_view_css_only_scrolls_display_math() -> None:
+    from scholaraio.interfaces.cli.gui import _static_dir
+
+    css = (_static_dir() / "styles.css").read_text(encoding="utf-8")
+
+    assert '.markdown-body mjx-container[display="true"]' in css
+    assert ".markdown-body mjx-container {\n  max-width: 100%;" not in css
+
+
 def test_library_view_tab_switch_resets_stale_type_filter() -> None:
     from scholaraio.interfaces.cli.gui import _static_dir
 
