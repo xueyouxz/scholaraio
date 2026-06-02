@@ -17,14 +17,22 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = ROOT / ".claude" / "skills"
 
 PRIORITY_TOKENS = {
+    "availability",
+    "checklist",
+    "figure",
+    "journal",
+    "nature",
     "poster",
+    "polishing",
     "report",
     "briefing",
     "rebuttal",
     "slides",
     "ppt",
+    "paper2ppt",
     "review",
     "section",
+    "submission",
     "guided",
     "reading",
 }
@@ -40,6 +48,14 @@ PHRASE_BONUSES = {
     "guided reading": 4.0,
     "deep reading": 4.0,
     "single paper": 3.0,
+    "nature figure": 4.0,
+    "nature style": 4.0,
+    "nature-style": 4.0,
+    "paper-to-ppt": 4.0,
+    "high-impact journal": 4.0,
+    "high-impact journal major revision": 4.0,
+    "nature communications": 4.0,
+    "nature-specific academic-search": 4.0,
 }
 
 
@@ -127,3 +143,73 @@ def test_guided_single_paper_prompt_prefers_paper_guided_reading_skill() -> None
 
     assert top_name == "paper-guided-reading"
     assert top_score > 0
+
+
+def test_nature_submission_package_prompt_prefers_nature_workflow_router() -> None:
+    top_name, top_score = _top_skill(
+        "Prepare my Nature Communications submission package: abstract polish, figures, citations, and data availability"
+    )
+
+    assert top_name == "nature-workflow"
+    assert top_score > 0
+
+
+def test_high_impact_revision_prompt_prefers_nature_workflow_router() -> None:
+    top_name, top_score = _top_skill("Plan a high-impact journal major revision response and submission checklist")
+
+    assert top_name == "nature-workflow"
+    assert top_score > 0
+
+
+def test_data_availability_prompt_prefers_nature_workflow_router() -> None:
+    top_name, top_score = _top_skill("Prepare a Data Availability statement for a Nature submission")
+
+    assert top_name == "nature-workflow"
+    assert top_score > 0
+
+
+def test_nature_figure_prompt_prefers_nature_workflow_router() -> None:
+    top_name, top_score = _top_skill("Make a Nature figure with Python from this result table")
+
+    assert top_name == "nature-workflow"
+    assert top_score > 0
+
+
+def test_nature_polishing_prompt_prefers_nature_workflow_router() -> None:
+    top_name, top_score = _top_skill("Use Nature-style polishing on this abstract")
+
+    assert top_name == "nature-workflow"
+    assert top_score > 0
+
+
+def test_nature_paper2ppt_prompt_prefers_nature_workflow_router() -> None:
+    top_name, top_score = _top_skill("Turn this paper into a Chinese journal-club PPT in Nature style")
+
+    assert top_name == "nature-workflow"
+    assert top_score > 0
+
+
+def test_generic_prose_polish_stays_with_writing_polish_skill() -> None:
+    top_name, top_score = _top_skill("Polish this manuscript paragraph for clarity without changing the claims")
+
+    assert top_name == "writing-polish"
+    assert top_score > 0
+
+
+def test_generic_academic_search_stays_outside_nature_workflow() -> None:
+    top_name, top_score = _top_skill("I need academic search for this literature review")
+
+    assert top_name != "nature-workflow"
+    assert top_score > 0
+
+
+def test_generic_data_availability_stays_outside_nature_workflow() -> None:
+    top_name, top_score = _top_skill("Prepare a Data Availability statement for this manuscript")
+
+    assert top_name != "nature-workflow"
+    assert top_score > 0
+
+
+def test_nature_workflow_phrase_bonuses_are_not_unqualified_generic_triggers() -> None:
+    for phrase in ("data availability", "academic search", "major revision", "submission package", "journal-club ppt"):
+        assert phrase not in PHRASE_BONUSES

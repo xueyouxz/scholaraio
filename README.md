@@ -103,6 +103,7 @@ run the migration in the upgraded checkout that contains your `data/`,
 For writing tasks, start with the router-style writing entry when the deliverable is clear but the workflow is not. The current writing stack is organized around:
 
 - `academic-writing`: route by deliverable and writing stage
+- `nature-workflow`: bridge to the upstream `nature-skills` bundle for Nature/high-impact figures, polishing, writing, reviewer critique, citation, Data Availability, paper reading, reviewer response, paper-to-PPT, and academic search; direct upstream skills are preferred when available
 - `literature-review`: long-form review and survey writing
 - `paper-guided-reading`: guided deep reading of a single paper from fuzzy search to full-text analysis
 - `paper-writing`: manuscript sections and paper-focused drafting

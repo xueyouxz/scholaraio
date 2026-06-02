@@ -8,6 +8,12 @@ ScholarAIO's writing support is organized as a small set of specialized skills p
 
 Use this first when the user knows the deliverable they want, but not which writing workflow to use. It routes by outcome, writing stage, and document type, then points to the right specialized skill or skill combination.
 
+### Nature Workflow Bridge (`/nature-workflow`)
+
+Use this when the user explicitly asks for Nature Skills, `nature-skills`, Nature-style, Nature-family/CNS, high-impact journal, or Springer Nature workflows. It bridges to the upstream `nature-*` skill index for figures, polishing, writing, reviewer critique, citation, Data Availability, paper reading, reviewer response, paper-to-PPT, and academic search. Direct upstream skill use is preferred when available; ScholarAIO's local skills are fallbacks, not simplified replacements.
+
+See the [Nature Workflow Quick Start](nature-workflow-quickstart.md) for common scenarios, example prompts, expected outputs, and the production demo fixture.
+
 ## Choose By Deliverable
 
 | Deliverable | Recommended skill path |
@@ -15,6 +21,7 @@ Use this first when the user knows the deliverable they want, but not which writ
 | Long-form literature review / survey | `/academic-writing` -> `/literature-review` |
 | Guided deep reading of a single paper | `/academic-writing` -> `/paper-guided-reading` |
 | Paper section draft (Introduction, Method, Results, Discussion, Conclusion) | `/academic-writing` -> `/paper-writing` |
+| Nature Skills / Nature-style / high-impact journal workflow | `/nature-workflow` -> upstream `nature-*` skill when available, otherwise ScholarAIO fallback |
 | Response letter / rebuttal | `/academic-writing` -> `/review-response` |
 | Research-gap memo / topic scouting | `/academic-writing` -> `/research-gap` |
 | Final prose cleanup / de-AI-fication / style transfer | `/academic-writing` -> `/writing-polish` |
@@ -29,6 +36,7 @@ Use this first when the user knows the deliverable they want, but not which writ
 | Stage | Recommended skill |
 |-------|-------------------|
 | Define scope and output format | `/academic-writing` |
+| Prepare a Nature-style, CNS, high-impact, or upstream Nature Skills workflow | `/nature-workflow` |
 | Collect and organize papers | `/workspace` |
 | Read and summarize evidence | `/show` |
 | Guided deep reading of a paper | `/paper-guided-reading` |
@@ -51,6 +59,10 @@ For tactical, format-specific rules and checklists, see the guides in `docs/writ
 - [`graphviz-guide.md`](../writing-guide/graphviz-guide.md) — Graphviz DOT/SVG diagram workflow for `scholaraio diagram`, including IR rendering, DOT sidecars, Beamer insertion, and troubleshooting.
 
 ## Current Writing Skills
+
+### Nature Workflow (`/nature-workflow`)
+
+Bridges to the upstream `nature-skills` bundle. Use it for explicit Nature Skills, Nature-style, Nature-family/CNS, high-impact journal, or Springer Nature tasks across figure making, polishing, manuscript writing, reviewer-style critique, citation support, Data Availability, full-paper readers, reviewer response, paper-to-PPT, and academic search. Submission package is only one scenario. If the original upstream skill is unavailable, it routes to ScholarAIO fallbacks and labels the result accordingly.
 
 ### Literature Review (`/literature-review`)
 

@@ -44,7 +44,7 @@ canonical skill 源是 `.claude/skills/`。其他 agent 发现入口都只是它
 代表性 skills：
 
 - 核心科研：`search`、`show`、`ingest`、`workspace`、`audit`、`translate`
-- 写作：`academic-writing`、`literature-review`、`paper-guided-reading`、`paper-writing`、`citation-check`、`writing-polish`、`review-response`、`research-gap`、`poster`、`technical-report`
+- 写作：`academic-writing`、`nature-workflow`、`literature-review`、`paper-guided-reading`、`paper-writing`、`citation-check`、`writing-polish`、`review-response`、`research-gap`、`poster`、`technical-report`
 - 输出与工具：`draw`、`document`、`websearch`、`webextract`、`scientific-runtime`、`scientific-tool-onboarding`
 
 如果一个流程已经长成可复用 playbook，就把它做成 skill，而不是继续膨胀这个文件。

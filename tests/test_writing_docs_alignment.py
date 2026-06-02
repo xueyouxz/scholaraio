@@ -88,3 +88,66 @@ def test_round_11_docs_index_mentions_writing_router() -> None:
     assert "guided deep reading" in content.lower()
     assert "posters" in content
     assert "technical reports" in content
+
+
+def test_nature_workflow_quickstart_is_documented_and_linked() -> None:
+    quickstart = _read("docs/guide/nature-workflow-quickstart.md")
+    for token in (
+        "# Nature Workflow Quick Start",
+        "When To Use It",
+        "Inputs To Provide",
+        "Common Scenarios",
+        "Example Prompts",
+        "Expected Outputs",
+        "Production Demo",
+        "Guardrails",
+    ):
+        assert token in quickstart
+
+    assert "workspace/_system/issue-107-routing-eval/product-demo" not in quickstart
+
+    writing_guide = _read("docs/guide/writing.md")
+    assert "nature-workflow-quickstart.md" in writing_guide
+
+    mkdocs = _read("mkdocs.yml")
+    assert "Nature Workflow Quick Start: guide/nature-workflow-quickstart.md" in mkdocs
+
+
+def test_nature_workflow_quickstart_has_executable_demo_and_install_commands() -> None:
+    quickstart = _read("docs/guide/nature-workflow-quickstart.md")
+
+    for token in (
+        "git clone https://github.com/Yuan1z0825/nature-skills.git",
+        "cd nature-skills",
+        "cp -R skills/_shared",
+        "for d in skills/nature-*",
+        "run_demo.py --output",
+        "run_product_demo.py --output-dir",
+        "route-cards.md",
+        "nature-workflow-product-demo",
+    ):
+        assert token in quickstart
+
+
+def test_nature_workflow_is_registered_on_all_agent_surfaces() -> None:
+    for rel_path in ("AGENTS.md", "CLAUDE.md", "AGENTS_CN.md", "README.md", "README_CN.md"):
+        assert "nature-workflow" in _read(rel_path)
+
+    clawhub = _read("clawhub.yaml")
+    assert "scholaraio/nature-workflow" in clawhub
+    assert "path: .claude/skills/nature-workflow" in clawhub
+
+
+def test_old_journal_submission_router_is_not_left_in_public_docs() -> None:
+    for rel_path in (
+        "AGENTS.md",
+        "AGENTS_CN.md",
+        "CLAUDE.md",
+        "README.md",
+        "README_CN.md",
+        "clawhub.yaml",
+        "docs/guide/agent-reference.md",
+        "docs/guide/writing.md",
+        "mkdocs.yml",
+    ):
+        assert "journal-submission" not in _read(rel_path)

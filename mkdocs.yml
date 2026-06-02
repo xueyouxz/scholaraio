@@ -45,6 +45,7 @@ nav:
       - Scientific Tool Onboarding: guide/toolref-onboarding.md
       - Ingestion: guide/ingestion.md
       - Writing: guide/writing.md
+      - Nature Workflow Quick Start: guide/nature-workflow-quickstart.md
       - Webtools Integration: guide/webtools-integration.md
       - Paper2Any Integration: guide/paper2any-integration.md
   - Writing Guides:

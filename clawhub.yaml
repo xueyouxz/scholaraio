@@ -74,6 +74,10 @@ skills:
     path: .claude/skills/academic-writing
     description: "Route academic-writing requests by deliverable: review, paper sections, rebuttal, PPT, poster, or technical report"
 
+  - name: scholaraio/nature-workflow
+    path: .claude/skills/nature-workflow
+    description: "Bridge Nature/high-impact workflows to upstream nature-skills, with ScholarAIO fallbacks"
+
   - name: scholaraio/literature-review
     path: .claude/skills/literature-review
     description: "Write a literature review based on workspace papers: topic organization, narrative, gap identification"

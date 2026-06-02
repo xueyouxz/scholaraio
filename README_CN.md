@@ -101,6 +101,7 @@ scholaraio index --rebuild
 针对写作类任务，如果用户已经知道交付物，但还不确定该走哪条 workflow，优先从写作总入口开始。当前写作能力主要包括：
 
 - `academic-writing`：按交付物和写作阶段分流
+- `nature-workflow`：对接上游 `nature-skills` bundle，覆盖 Nature/高影响力论文配图、润色、写作、审稿人视角评估、引用、Data Availability、论文阅读、审稿回复、paper-to-PPT 和学术检索；原始上游 skill 可用时优先直连
 - `literature-review`：长文综述与 survey
 - `paper-guided-reading`：从模糊检索到单篇深读的引导式精读
 - `paper-writing`：论文具体章节写作

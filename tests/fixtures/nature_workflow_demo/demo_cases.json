@@ -1,0 +1,70 @@
+{
+  "cases": [
+    {
+      "name": "figure-direct",
+      "prompt": "/nature-workflow Use Python to create a Nature-style multi-panel figure from these benchmark results.",
+      "expected_upstream": "nature-figure",
+      "upstream_available": true
+    },
+    {
+      "name": "polishing-direct",
+      "prompt": "/nature-workflow Polish this abstract in Nature Communications style without changing the claims.",
+      "expected_upstream": "nature-polishing",
+      "upstream_available": true
+    },
+    {
+      "name": "writing-direct",
+      "prompt": "/nature-workflow Draft a Nature-style introduction from these novelty and result notes.",
+      "expected_upstream": "nature-writing",
+      "upstream_available": true
+    },
+    {
+      "name": "reviewer-direct",
+      "prompt": "/nature-workflow Simulate a Nature-style reviewer critique for this draft before submission.",
+      "expected_upstream": "nature-reviewer",
+      "upstream_available": true
+    },
+    {
+      "name": "citation-direct",
+      "prompt": "/nature-workflow Add Nature/CNS-family citation support to these manuscript claims and export RIS.",
+      "expected_upstream": "nature-citation",
+      "upstream_available": true
+    },
+    {
+      "name": "data-direct",
+      "prompt": "/nature-workflow Draft a Nature Data Availability statement and repository plan for this manuscript.",
+      "expected_upstream": "nature-data",
+      "upstream_available": true
+    },
+    {
+      "name": "reader-direct",
+      "prompt": "/nature-workflow Build a full-paper bilingual Markdown reader with source anchors for this PDF.",
+      "expected_upstream": "nature-reader",
+      "upstream_available": true
+    },
+    {
+      "name": "response-direct",
+      "prompt": "/nature-workflow Draft a point-by-point reviewer response letter for this Nature-family major revision.",
+      "expected_upstream": "nature-response",
+      "upstream_available": true
+    },
+    {
+      "name": "paper2ppt-direct",
+      "prompt": "/nature-workflow Turn this paper into a Chinese journal-club PPT in Nature style.",
+      "expected_upstream": "nature-paper2ppt",
+      "upstream_available": true
+    },
+    {
+      "name": "academic-search-direct",
+      "prompt": "/nature-workflow Run a Nature-focused academic search, verify DOI metadata, and prepare reference exports.",
+      "expected_upstream": "nature-academic-search",
+      "upstream_available": true
+    },
+    {
+      "name": "figure-fallback",
+      "prompt": "/nature-workflow Make a Nature figure from this table, but assume upstream nature-skills is not installed.",
+      "expected_upstream": "nature-figure",
+      "upstream_available": false
+    }
+  ]
+}
